@@ -115,10 +115,11 @@ void server::runServer()
     }
 }
 
-server::server(int port)
+server::server(int port, std::string password)
 {
     _serverfd = -1;
     _port = port;
+    _password = password;
 }
 
 server::~server()
