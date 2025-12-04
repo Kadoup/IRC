@@ -1,0 +1,13 @@
+prefix is :
+:nickname!usrname@hostname
+or
+:servername
+
+param:
+
+max 15 param per messages. max 512 octets;
+
+middle param -> no spaces, can have multiple, , sperated by spaces
+
+
+trailing param: starts by :, always last;
