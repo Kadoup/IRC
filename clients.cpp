@@ -1,14 +1,22 @@
 #include "clients.hpp"
+#include "channel.hpp"
 
 void clients::checkRegistration()
 {
-    if (_authetificated && !_nickname.empty() && _username.empty())
+    if (_authentificated && !_nickname.empty() && !_username.empty())
         _registered = true;
 }
 
 clients::clients(int fd)
 {
     _fd = fd;
+    _registered = false;
+    _authentificated = false;
+}
+
+clients::clients()
+{
+    _fd = 0;
     _registered = false;
     _authentificated = false;
 }
@@ -24,7 +32,7 @@ void clients::setAuthentificated(bool auth)
 
 bool clients::isAuthentificated() const
 {
-    if (_autentificated == true)
+    if (_authentificated == true)
         return true;
     return false;
 }
@@ -47,6 +55,11 @@ void clients::setNickname(const std::string &nick)
     checkRegistration();
 }
 
+void clients::setRealName(const std::string &real)
+{
+    _realName = real;
+}
+
 void clients::setUsername(const std::string &user)
 {
     _username = user;
@@ -56,4 +69,9 @@ void clients::setUsername(const std::string &user)
 void clients::setHostname(const std::string &host)
 {
     _hostName = host;
+}
+
+std::string clients::getNickname() const
+{
+    return _nickname;
 }

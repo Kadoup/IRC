@@ -1,3 +1,5 @@
+#pragma once
+
 #include <iostream>
 #include <vector>
 #include <sys/socket.h>
@@ -6,13 +8,18 @@
 #include <cstring>
 #include <poll.h>
 #include <cstdlib>
+#include <map>
+#include <algorithm>
 #include <sstream>
 #include "clients.hpp"
+#include "channel.hpp"
 
 class server
 {
 private:
     std::vector<pollfd> _fds;
+    std::map<int, clients> _clients;
+    std::vector<channel> _channels;
     int _serverfd;
     int _port;
     std::string _password;
@@ -22,6 +29,11 @@ public:
     void broadcastMessage(int senderfd, const std::string& message);
     void connectClient();
     void handleClientMessage(size_t& i);
+    void userAuthentification(int fd, std::string buffer);
+    void handleNick(int fd, std::vector<std::string> parsed);
+    void handleCommands(int fd, std::vector<std::string> parsed);
+    bool isUniqueNickname(int fd, std::string nick);
+    void handleUser(int fd, std::vector<std::string> parsed);
     server(int port, std::string password);
     ~server();
 };

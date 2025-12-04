@@ -1,4 +1,9 @@
-#include "server.hpp"
+#pragma once
+
+#include <string>
+#include <vector>
+
+#include "clients.hpp"
 
 class channel
 {
