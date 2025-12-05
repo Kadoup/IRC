@@ -74,8 +74,8 @@ bool    checkParams(std::string params, std::string command)
 		size_t pos = params.find(' ');
 		if (pos == std::string::npos)
 			return false;
-		if (!isValidNickname)
-
+		if (!isValidNickname(params))
+			return false;
 		return true;
 	}
 	else if (command == "PASS")
@@ -112,14 +112,14 @@ std::vector<std::string> parseCommand(std::string buffer)
 		middle = params;
 	}
 	std::stringstream ss(middle);
-    std::string arg;
-    while (ss >> arg) {
+	std::string arg;
+	while (ss >> arg) {
 		parsed.push_back(arg);
-    }
-    if (!trail.empty()) {
+	}
+	if (!trail.empty()) {
 		parsed.push_back(trail);
-    }
-    return parsed;
+	}
+	return parsed;
 }
 
 void    server::userAuthentification(int fd, std::string buffer)
@@ -150,7 +150,7 @@ void    server::userAuthentification(int fd, std::string buffer)
 		std::cout << "Wrong command" << std::endl;
 }
 
-bool server::isUniqueNickname(int fd, std::string nick)
+bool server::isUniqueNickname(std::string nick)
 {
 	std::map<int, clients>::iterator it;
 	for (it = _clients.begin(); it != _clients.end(); it++)
@@ -168,7 +168,7 @@ void	server::handleNick(int fd, std::vector<std::string> parsed)
 	else {
 		if (!isValidNickname(parsed[1]))
 			std::cout << "Bad nickname" << std::endl;
-		else if (!isUniqueNickname(fd, parsed[1]))
+		else if (!isUniqueNickname(parsed[1]))
 			std::cout << "Nickname is not unique" << std::endl;
 		else {
 			_clients[fd].setNickname(parsed[1]);
@@ -190,6 +190,43 @@ void server::handleUser(int fd, std::vector<std::string> parsed)
 	}
 }
 
+void server::handlePass(int fd, std::vector<std::string> parsed)
+{
+	if (parsed.size() > 2)
+		std::cout << "Wrong number of arguments" << std::endl;
+	else 
+	{
+		if (parsed[1] == _password)
+		{
+			std::cout << "Welcome " << _clients[fd].getNickname() << std::endl;
+			_clients[fd].setAuthentificated(true);
+		}
+		else 
+			std::cout << "Wrong Password" << std::endl;
+	}
+}
+
+void server::handleQuit(int fd, std::vector<std::string> parsed)
+{
+	(void)parsed;
+	if (parsed.size() > 2)
+		std::cout << "Wrong number of arguments" << std::endl;
+
+	std::cout << "Client disconnected: " << fd << std::endl;
+
+	close(fd);
+	_clients.erase(fd);
+	
+	for (size_t i = 0; i < _fds.size(); ++i)
+	{
+		if (_fds[i].fd == fd)
+		{
+			_fds.erase(_fds.begin() + i);
+			break;
+		}
+	}
+}
+
 void	server::handleCommands(int fd, std::vector<std::string> parsed) {
 	std::string command = parsed[0];
 
@@ -198,9 +235,9 @@ void	server::handleCommands(int fd, std::vector<std::string> parsed) {
 	else if (command == "USER")
 		handleUser(fd, parsed);
 	else if (command == "PASS")
-		handlePass();
+		handlePass(fd, parsed);
 	else if (command == "QUIT")
-		handleQuit();
+		handleQuit(fd, parsed);
 	else
 		std::cout << "Wrong command" << std::endl;
 }
