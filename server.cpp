@@ -67,25 +67,25 @@ bool isValidNickname(const std::string& param)
 	return true;
 }
 
-bool    checkParams(std::string params, std::string command)
-{
-	if (command == "NICK")
-	{
-		size_t pos = params.find(' ');
-		if (pos == std::string::npos)
-			return false;
-		if (!isValidNickname)
+// bool    checkParams(std::string params, std::string command)
+// {
+// 	if (command == "NICK")
+// 	{
+// 		size_t pos = params.find(' ');
+// 		if (pos == std::string::npos)
+// 			return false;
+// 		if (!isValidNickname)
 
-		return true;
-	}
-	else if (command == "PASS")
-	{
-		size_t pos = params.find(' ');
-		if (pos == std::string::npos)
-			return false;
-		return true;
-	}
-}
+// 		return true;
+// 	}
+// 	else if (command == "PASS")
+// 	{
+// 		size_t pos = params.find(' ');
+// 		if (pos == std::string::npos)
+// 			return false;
+// 		return true;
+// 	}
+// }
 
 
 std::vector<std::string> parseCommand(std::string buffer)
@@ -122,35 +122,7 @@ std::vector<std::string> parseCommand(std::string buffer)
     return parsed;
 }
 
-void    server::userAuthentification(int fd, std::string buffer)
-{
-	std::string command;
-	std::string params;
-	size_t pos = buffer.find(' ');
-	if (pos != std::string::npos) {
-		command = buffer.substr(0, pos);
-		params = buffer.substr(pos + 1);
-	}
-	std::transform(command.begin(), command.end(), command.begin(), ::toupper);
-	if (command == "NICK")
-		_clients[fd].setNickname("blou");
-	else if (command == "USER")
-		_clients[fd].setUsername("blou");
-	else if (command == "PASS")
-	{
-		if("blou" == _password)
-		{
-			std::cout << "Welcome " << _clients[fd].getNickname() << std::endl;
-			_clients[fd].setAuthentificated(true);
-		}
-		else
-			std::cout << "Wrong Password" << std::endl;
-	}
-	else
-		std::cout << "Wrong command" << std::endl;
-}
-
-bool server::isUniqueNickname(int fd, std::string nick)
+bool server::isUniqueNickname(std::string nick)
 {
 	std::map<int, clients>::iterator it;
 	for (it = _clients.begin(); it != _clients.end(); it++)
@@ -163,12 +135,12 @@ bool server::isUniqueNickname(int fd, std::string nick)
 
 void	server::handleNick(int fd, std::vector<std::string> parsed)
 {
-	if (parsed.size() > 2)
+	if (parsed.size() != 2)
 		std::cout << "Wrong number of arguments" << std::endl;
 	else {
 		if (!isValidNickname(parsed[1]))
 			std::cout << "Bad nickname" << std::endl;
-		else if (!isUniqueNickname(fd, parsed[1]))
+		else if (!isUniqueNickname(parsed[1]))
 			std::cout << "Nickname is not unique" << std::endl;
 		else {
 			_clients[fd].setNickname(parsed[1]);
@@ -178,7 +150,7 @@ void	server::handleNick(int fd, std::vector<std::string> parsed)
 
 void server::handleUser(int fd, std::vector<std::string> parsed)
 {
-	if (parsed.size() != 4)
+	if (parsed.size() != 5)
 		std::cout << "Wrong number of arguments" << std::endl;
 	else {
 		if (!isValidNickname(parsed[1]))
@@ -190,6 +162,51 @@ void server::handleUser(int fd, std::vector<std::string> parsed)
 	}
 }
 
+void server::handlePass(int fd, std::vector<std::string> parsed)
+{
+	if (parsed.size() != 2)
+		std::cout << "Wrong number of arguments" << std::endl;
+	if (_clients[fd].isAuthentificated())
+		std::cout << "You are already authenticated" << std::endl;
+	else
+	{
+		if (parsed[1] == _password)
+		{
+			std::cout << "Welcome " << _clients[fd].getNickname() << std::endl;
+			_clients[fd].setAuthentificated(true);
+		}
+		else
+			std::cout << "Wrong Password" << std::endl;
+	}
+}
+
+void server::handleQuit(int fd, std::vector<std::string> parsed)
+{
+	if (parsed.size() > 2)
+		std::cout << "Wrong number of arguments" << std::endl;
+	else {
+		close(fd);
+		_clients.erase(fd);
+		for (size_t i = 0; i < _fds.size(); ++i)
+		{
+			if (fd == _fds[i].fd)
+			{
+				_fds.erase(_fds.begin() + i);
+				break;
+			}
+		}
+	}
+}
+
+void printParsed(const std::vector<std::string>& parsed)
+{
+	std::cout << "Parsed command:" << std::endl;
+	for (size_t i = 0; i < parsed.size(); ++i)
+	{
+		std::cout << "Part " << i << ": " << parsed[i] << std::endl;
+	}
+}
+
 void	server::handleCommands(int fd, std::vector<std::string> parsed) {
 	std::string command = parsed[0];
 
@@ -198,13 +215,70 @@ void	server::handleCommands(int fd, std::vector<std::string> parsed) {
 	else if (command == "USER")
 		handleUser(fd, parsed);
 	else if (command == "PASS")
-		handlePass();
+		handlePass(fd, parsed);
+	else if (command == "PRIVMSG")
+		handlePrvMsg(fd, parsed);
 	else if (command == "QUIT")
-		handleQuit();
+		handleQuit(fd, parsed);
 	else
 		std::cout << "Wrong command" << std::endl;
 }
 
+std::vector<int> server::findTarget(std::string target)
+{
+	std::vector<int> targetFds;
+
+	std::stringstream ss(target);
+	std::string singleTarget;
+	
+	while (std::getline(ss, singleTarget, ','))
+	{
+		bool found = false;
+		std::map<int, clients>::iterator it;
+		for (it = _clients.begin(); it != _clients.end(); it++)
+		{
+			if (singleTarget == it->second.getNickname())
+			{
+				targetFds.push_back(it->first);
+				found = true;
+				break;
+			}
+		}
+		if (!found)
+			targetFds.push_back(-1);
+	}
+	return targetFds;
+}
+
+void server::handlePrvMsg(int fd, std::vector<std::string> parsed)
+{
+	// :nickname!usrname@hostname
+	std::string prefix;
+	prefix = ":" + _clients[fd].getNickname() + "!" + _clients[fd].getUsername() + "@" + _clients[fd].getHostname() + " ";
+	if (parsed.size() < 3)
+	{
+		std::cout << "Wrong number of arguments" << std::endl;
+		return;
+	}
+	std::string target = parsed[1];
+	std::string message = prefix + parsed[0] + " " + target + " :" + parsed[2] + "\r\n";
+	std::vector<int>targetFds = findTarget(target);
+	for (size_t i = 0; i < targetFds.size(); ++i)
+	{
+		if (targetFds[i] != -1)
+		{
+			int sent = send(targetFds[i], message.c_str(), message.length(), 0);
+			if (sent == -1)
+				std::cout << "Send failed" << std::endl;
+		}
+		else
+		{
+			std::cout << "No user called like that bro" << std::endl;
+		}
+
+	}
+
+}
 
 void server::handleClientMessage(size_t& i)
 {
@@ -217,9 +291,25 @@ void server::handleClientMessage(size_t& i)
 	} 
 	buffer[n] = '\0';
 	
-	std::vector<std::string> command = parseCommand(std::string(buffer));
-	handleCommands(_fds[i].fd, command);
-	userAuthentification(_fds[i].fd, std::string(buffer));
+	
+	_clients[_fds[i].fd].setBuffer(std::string(buffer));
+	std::string msg = _clients[_fds[i].fd].getBuffer();
+	size_t pos = msg.find("\r\n");
+	std::cout << "pos: " << pos << std::endl;
+    if (pos == std::string::npos) {
+        return;
+	}
+	while (pos != std::string::npos)
+	{
+		std::string fullMess = msg.substr(0, pos);
+		std::vector<std::string> command = parseCommand(fullMess);
+		printParsed(command);
+		handleCommands(_fds[i].fd, command);
+		_clients[_fds[i].fd].clearBuffer(pos);
+		msg = _clients[_fds[i].fd].getBuffer();
+		pos = msg.find("\r\n");
+	}
+	std::cout << _clients[_fds[i].fd] << std::endl;
 	// std::stringstream ss;
 	// ss << _fds[i].fd;
 	// std::string clientName = "Client " + ss.str() + ": ";

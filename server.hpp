@@ -29,11 +29,14 @@ public:
     void broadcastMessage(int senderfd, const std::string& message);
     void connectClient();
     void handleClientMessage(size_t& i);
-    void userAuthentification(int fd, std::string buffer);
     void handleNick(int fd, std::vector<std::string> parsed);
     void handleCommands(int fd, std::vector<std::string> parsed);
-    bool isUniqueNickname(int fd, std::string nick);
+    bool isUniqueNickname(std::string nick);
+    void handlePrvMsg(int fd, std::vector<std::string> parsed);
     void handleUser(int fd, std::vector<std::string> parsed);
+    void handlePass(int fd, std::vector<std::string> parsed);
+    void handleQuit(int fd, std::vector<std::string> parsed);
+    std::vector<int> findTarget(std::string target);
     server(int port, std::string password);
     ~server();
 };
