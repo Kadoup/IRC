@@ -19,7 +19,7 @@ class server
 private:
     std::vector<pollfd> _fds;
     std::map<int, clients> _clients;
-    std::vector<channel> _channels;
+    std::map<std::string, channel> _channels;
     int _serverfd;
     int _port;
     std::string _password;
@@ -36,6 +36,7 @@ public:
     void handleUser(int fd, std::vector<std::string> parsed);
     void handlePass(int fd, std::vector<std::string> parsed);
     void handleQuit(int fd, std::vector<std::string> parsed);
+    void handleJoin(int fd, std::vector<std::string>& parsed);
     std::vector<int> findTarget(std::string target);
     server(int port, std::string password);
     ~server();
