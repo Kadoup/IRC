@@ -114,7 +114,7 @@ bool server::isUniqueNickname(std::string nick)
 	return true;
 }
 
-void	server::handleNick(int fd, std::vector<std::string> parsed)
+void	server::handleNick(int fd, const std::vector<std::string>& parsed)
 {
 	if (parsed.size() != 2)
 		std::cout << "Wrong number of arguments" << std::endl;
@@ -129,7 +129,7 @@ void	server::handleNick(int fd, std::vector<std::string> parsed)
 	}
 }
 
-void server::handleUser(int fd, std::vector<std::string> parsed)
+void server::handleUser(int fd, const std::vector<std::string>& parsed)
 {
 	if (parsed.size() != 5)
 		std::cout << "Wrong number of arguments" << std::endl;
@@ -143,7 +143,7 @@ void server::handleUser(int fd, std::vector<std::string> parsed)
 	}
 }
 
-void server::handlePass(int fd, std::vector<std::string> parsed)
+void server::handlePass(int fd, const std::vector<std::string>& parsed)
 {
 	if (parsed.size() != 2)
 		std::cout << "Wrong number of arguments" << std::endl;
@@ -161,7 +161,7 @@ void server::handlePass(int fd, std::vector<std::string> parsed)
 	}
 }
 
-void server::handleQuit(int fd, std::vector<std::string> parsed)
+void server::handleQuit(int fd, const std::vector<std::string>& parsed)
 {
 	if (parsed.size() > 2)
 		std::cout << "Wrong number of arguments" << std::endl;
@@ -188,7 +188,7 @@ void printParsed(const std::vector<std::string>& parsed)
 	}
 }
 
-void server::handleJoin(int fd, std::vector<std::string>& parsed)
+void server::handleJoin(int fd, const std::vector<std::string>& parsed)
 {
 	if (!_clients[fd].isRegistered())
 	{
@@ -265,7 +265,7 @@ std::string server::_getServerName() const
     return _serverName;
 }
 
-void server::handleKick(int fd, std::vector<std::string> parsed)
+void server::handleKick(int fd, const std::vector<std::string>& parsed)
 {
 	if (parsed.size() < 3)
 	{
@@ -324,9 +324,26 @@ void server::handleKick(int fd, std::vector<std::string> parsed)
 	send(targetFd, response.c_str(), response.length(), 0);
 }
 
-void	server::handleCommands(int fd, std::vector<std::string> parsed) {
+// void server::registerCommand(const std::string& name, const command& cmd) {
+// 	commandMap[name] = cmd;
+// }
+
+void	server::handleCommands(int fd, const std::vector<std::string>& parsed) {
 	std::string command = parsed[0];
 
+	// struct commandContext {
+	// 	fd;
+	// 	parsed;
+	// 	this;
+	// } ctx;
+	// ctx.fd = fd;
+	// ctx.parsed = parsed;
+	// ctx.this = this;
+	// command cmd = commandMap.find(command);
+	// if (cmd != commandMap.end()) {
+	// 	cmd->second.execute(ctx);
+	// 	return;
+	// }
 	if (command == "NICK")
 		handleNick(fd, parsed);
 	else if (command == "USER")
@@ -391,7 +408,7 @@ std::vector<int> server::findTarget(std::string target, int senderFd)
 	return targetFds;
 }
 
-void server::handlePrvMsg(int fd, std::vector<std::string> parsed)
+void server::handlePrvMsg(int fd, const std::vector<std::string>& parsed)
 {
 	// :nickname!usrname@hostname
 	if (!_clients[fd].isRegistered())
@@ -425,7 +442,7 @@ void server::handlePrvMsg(int fd, std::vector<std::string> parsed)
 	}
 }
 
-void server::handleTopic(int fd, std::vector<std::string> parsed)
+void server::handleTopic(int fd, const std::vector<std::string>& parsed)
 {
 	std::string channelName = parsed[1];
 	std::map<std::string, channel>::iterator it = _channels.find(channelName);
