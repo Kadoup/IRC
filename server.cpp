@@ -265,6 +265,65 @@ std::string server::_getServerName() const
     return _serverName;
 }
 
+void server::handleKick(int fd, std::vector<std::string> parsed)
+{
+	if (parsed.size() < 3)
+	{
+		std::cout << "Wrong number of arguments" << std::endl;
+		return;
+	}
+	std::string channelName = parsed[1];
+	std::string targetNick = parsed[2];
+
+	std::map<std::string, channel>::iterator chanIt = _channels.find(channelName);
+	if (chanIt == _channels.end())
+	{
+		std::cout << "Channel does not exist" << std::endl;
+		return;
+	}
+	if (!chanIt->second.isOperator(fd))
+	{
+		std::cout << "You are not channel operator" << std::endl;
+		return;
+	}
+	int targetFd = -1;
+	std::map<int, clients>::iterator clientIt;
+	for (clientIt = _clients.begin(); clientIt != _clients.end(); ++clientIt)
+	{
+		if (clientIt->second.getNickname() == targetNick)
+		{
+			targetFd = clientIt->first;
+			break;
+		}
+	}
+
+	if (targetFd == -1)
+	{
+		std::cout << "User not found" << std::endl;
+		return;
+	}
+
+	if (!chanIt->second.isMember(targetFd))
+	{
+		std::cout << "User is not in the channel" << std::endl;
+		return;
+	}
+
+	chanIt->second.removeMember(targetFd);
+
+	std::string reason = parsed.size() > 3 ? parsed[3] : targetNick;
+	std::string response = ":" + _clients[fd].getNickname() + "!" + 
+						_clients[fd].getUsername() + "@localhost KICK " + 
+						channelName + " " + targetNick + " :" + reason + "\r\n";
+
+	std::map<int, clients*> members = chanIt->second.getMembers();
+	for (std::map<int, clients*>::iterator it = members.begin(); it != members.end(); ++it)
+	{
+		send(it->first, response.c_str(), response.length(), 0);
+	}
+	send(targetFd, response.c_str(), response.length(), 0);
+}
+
 void	server::handleCommands(int fd, std::vector<std::string> parsed) {
 	std::string command = parsed[0];
 
@@ -279,7 +338,9 @@ void	server::handleCommands(int fd, std::vector<std::string> parsed) {
 	else if (command == "JOIN")
 		handleJoin(fd, parsed);
 	else if (command == "TOPIC")
-		handleTopic(fd, parsed);	
+		handleTopic(fd, parsed);
+	else if (command == "KICK")
+		handleKick(fd, parsed);
 	else if (command == "QUIT")
 		handleQuit(fd, parsed);
 	else
@@ -391,14 +452,14 @@ void server::handleTopic(int fd, std::vector<std::string> parsed)
 		std::map<int, clients*> members = it->second.getMembers();
 		for (std::map<int, clients*>::iterator memberIt = members.begin(); memberIt != members.end(); ++memberIt)
 		{
-			if (memberIt->first == fd)
-				continue;
+			// if (memberIt->first == fd)
+			// 	continue;
 			int memberFd = memberIt->first;
 			send(memberFd, response.c_str(), response.length(), 0);
 		}
 		// Broadcast to all members
 		// For simplicity, we will just send to the client who set the topic
-		send(fd, response.c_str(), response.length(), 0);
+		// send(fd, response.c_str(), response.length(), 0);
 	}
 	else
 	{

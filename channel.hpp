@@ -20,6 +20,8 @@ private:
     
     public:
     void addMember(int clientFd, clients* client);
+    void removeMember(int clientFd);
+    bool isMember(int clientFd) const;
     clients* getCreator() const;
     std::string getTopic() const;
     std::map<int, clients*> getMembers() const;

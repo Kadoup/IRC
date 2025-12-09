@@ -51,6 +51,16 @@ channel& channel::operator=(const channel& other)
     return *this;
 }
 
+void channel::removeMember(int clientFd)
+{
+    _members.erase(clientFd);
+}
+
+bool channel::isMember(int clientFd) const
+{
+    return _members.find(clientFd) != _members.end();
+}
+
 void channel::setTopic(const std::string& topic)
 {
     _topic = topic;
