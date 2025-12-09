@@ -30,6 +30,7 @@ channel::channel(std::string name, clients* creator) : _creator(creator)
     _name = name;
     _operators.insert(creator->getFd());
     addMember(creator->getFd(), creator);
+    _topic = "No topic is set";
 }
 
 channel::channel(const channel& other)
@@ -60,9 +61,13 @@ std::string channel::getTopic() const
     return _topic;
 }
 
+std::map<int, clients*> channel::getMembers() const
+{
+    return _members;
+}
+
 channel::channel()
 {
-    _topic = "No topic is set";
 }
 
 channel::~channel()

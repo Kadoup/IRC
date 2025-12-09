@@ -15,11 +15,14 @@ private:
     std::string _name;
     clients* _creator;
     std::string _topic;
+    // bool _inviteOnly;
+    // std::map<int, clients*> _invited;
     
     public:
     void addMember(int clientFd, clients* client);
     clients* getCreator() const;
     std::string getTopic() const;
+    std::map<int, clients*> getMembers() const;
     bool isOperator(int clientFd) const;
     void addOperator(int clientFd);
     void removeOperator(int clientFd);

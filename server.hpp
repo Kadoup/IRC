@@ -40,7 +40,7 @@ public:
     void handleJoin(int fd, std::vector<std::string>& parsed);
     void handleTopic(int fd, std::vector<std::string> parsed);
     std::string _getServerName() const;
-    std::vector<int> findTarget(std::string target);
+    std::vector<int> findTarget(std::string target, int senderFd);
     server(int port, std::string password);
     ~server();
 };
