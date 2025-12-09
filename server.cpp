@@ -17,6 +17,8 @@ void    server::connectClient()
 		_clients[clientSocket] = paul;
 		pollfd clientPollFd = createPoll(clientSocket);
 		_fds.push_back(clientPollFd);
+		std::string notice = "NOTICE AUTH :*** Looking up your hostname...\r\n";
+        send(clientSocket, notice.c_str(), notice.length(), 0);
 		std::cout << "New client connected: " << clientSocket << std::endl;
 	}
 }
@@ -66,27 +68,6 @@ bool isValidNickname(const std::string& param)
 	}
 	return true;
 }
-
-// bool    checkParams(std::string params, std::string command)
-// {
-// 	if (command == "NICK")
-// 	{
-// 		size_t pos = params.find(' ');
-// 		if (pos == std::string::npos)
-// 			return false;
-// 		if (!isValidNickname)
-
-// 		return true;
-// 	}
-// 	else if (command == "PASS")
-// 	{
-// 		size_t pos = params.find(' ');
-// 		if (pos == std::string::npos)
-// 			return false;
-// 		return true;
-// 	}
-// }
-
 
 std::vector<std::string> parseCommand(std::string buffer)
 {
@@ -207,8 +188,155 @@ void printParsed(const std::vector<std::string>& parsed)
 	}
 }
 
+
+// void server::handleJoin(int fd, std::vector<std::string>& parsed)
+// {
+//     std::cout << "=== HANDLE JOIN ===" << std::endl;
+//     std::cout << "parsed.size(): " << parsed.size() << std::endl;
+    
+//     if (parsed.size() < 2)
+//     {
+//         std::cout << "Wrong number of arguments" << std::endl;
+//         return;
+//     }
+    
+//     std::cout << "Channel name: " << parsed[1] << std::endl;
+    
+//     char prefix = parsed[1][0];
+//     std::cout << "Prefix: " << prefix << std::endl;
+    
+//     if (prefix != '#' && prefix != '&' && prefix != '!' && prefix != '+')
+//     {
+//         std::cout << "Invalid channel name : must start with #,&,! or +" << std::endl;
+//         return;
+//     }
+    
+//     if (parsed[1].length() > 50)
+//     {
+//         std::cout << "Channel name too long (max 50 characters)" << std::endl;
+//         return;
+//     }
+    
+//     for (size_t i = 1; i < parsed[1].length(); ++i)
+//     {
+//         if (!isAuthorisedChar(parsed[1][i]) && parsed[1][i] != '-')
+//         {
+//             std::cout << "Invalid character at position " << i << ": " << parsed[1][i] << std::endl;
+//             return;
+//         }
+//     }
+    
+//     std::cout << "Checking if channel exists..." << std::endl;
+//     if (_channels.find(parsed[1]) != _channels.end())
+//     {
+//         std::cout << "Channel exists, adding member" << std::endl;
+//         _channels[parsed[1]].addMember(fd, &_clients[fd]);
+//     }
+//     else {
+//         std::cout << "Creating new channel: " << parsed[1] << std::endl;
+//         channel newChannel(parsed[1], &_clients[fd]);
+//         _channels[parsed[1]] = newChannel;
+//     }
+    
+//     // 1. Envoyer JOIN
+//     std::string response = ":" + _clients[fd].getNickname() + "!" + 
+//                           _clients[fd].getUsername() + "@localhost JOIN " + 
+//                           parsed[1] + "\r\n";
+//     std::cout << "Sending: " << response;
+//     send(fd, response.c_str(), response.length(), 0);
+    
+//     // 2. Envoyer TOPIC (si défini)
+//     std::string topic = _channels[parsed[1]].getTopic();
+//     if (!topic.empty() && topic != "No topic is set")
+//     {
+//         response = ":localhost 332 " + _clients[fd].getNickname() + 
+//                   " " + parsed[1] + " :" + topic + "\r\n";
+//         std::cout << "Sending: " << response;
+//         send(fd, response.c_str(), response.length(), 0);
+//     }
+    
+//     // 3. Envoyer NAMES list (353) - OBLIGATOIRE
+//     response = ":localhost 353 " + _clients[fd].getNickname() + 
+//               " = " + parsed[1] + " :@" + _clients[fd].getNickname() + "\r\n";
+//     std::cout << "Sending: " << response;
+//     send(fd, response.c_str(), response.length(), 0);
+    
+//     // 4. Envoyer END OF NAMES (366) - OBLIGATOIRE
+//     response = ":localhost 366 " + _clients[fd].getNickname() + 
+//               " " + parsed[1] + " :End of /NAMES list\r\n";
+//     std::cout << "Sending: " << response;
+//     send(fd, response.c_str(), response.length(), 0);
+// }
+
+// void server::handleJoin(int fd, std::vector<std::string>& parsed)
+// {
+//     std::cout << "=== HANDLE JOIN ===" << std::endl;
+//     std::cout << "parsed.size(): " << parsed.size() << std::endl;
+    
+//     if (parsed.size() < 2)
+//     {
+//         std::cout << "Wrong number of arguments" << std::endl;
+//         return;
+//     }
+    
+//     std::cout << "Channel name: " << parsed[1] << std::endl;
+    
+//     char prefix = parsed[1][0];
+//     std::cout << "Prefix: " << prefix << std::endl;
+    
+//     if (prefix != '#' && prefix != '&' && prefix != '!' && prefix != '+')
+//     {
+//         std::cout << "Invalid channel name : must start with #,&,! or +" << std::endl;
+//         return;
+//     }
+    
+//     if (parsed[1].length() > 50)
+//     {
+//         std::cout << "Channel name too long (max 50 characters)" << std::endl;
+//         return;
+//     }
+    
+//     for (size_t i = 1; i < parsed[1].length(); ++i)
+//     {
+//         if (!isAuthorisedChar(parsed[1][i]) && parsed[1][i] != '-')
+//         {
+//             std::cout << "Invalid character at position " << i << ": " << parsed[1][i] << std::endl;
+//             return;
+//         }
+//     }
+    
+//     std::cout << "Checking if channel exists..." << std::endl;
+//     if (_channels.find(parsed[1]) != _channels.end())
+//     {
+//         std::cout << "Channel exists, adding member" << std::endl;
+//         _channels[parsed[1]].addMember(fd, &_clients[fd]);
+        
+//         std::string response = ":" + _clients[fd].getNickname() + "!" + 
+//                               _clients[fd].getUsername() + "@localhost JOIN " + 
+//                               parsed[1] + "\r\n";
+//         send(fd, response.c_str(), response.length(), 0);
+//         return;
+//     }
+//     else {
+//         std::cout << "Creating new channel: " << parsed[1] << std::endl;
+//         channel newChannel(parsed[1], &_clients[fd]);
+//         _channels[parsed[1]] = newChannel;
+        
+//         std::string response = ":" + _clients[fd].getNickname() + "!" + 
+//                               _clients[fd].getUsername() + "@localhost JOIN " + 
+//                               parsed[1] + "\r\n";
+// 		std::cout << "Sending: " << response;
+//         send(fd, response.c_str(), response.length(), 0);
+//     }
+// }
+
 void server::handleJoin(int fd, std::vector<std::string>& parsed)
 {
+	if (!_clients[fd].isRegistered())
+	{
+		std::cout << "You need to register before joining a channel" << std::endl;
+		return;
+	}
 	if (parsed.size() < 2)
 		std::cout << "Wrong number of arguments" << std::endl;
 	else
@@ -249,6 +377,11 @@ void server::handleJoin(int fd, std::vector<std::string>& parsed)
 	}
 }
 
+std::string server::_getServerName() const
+{
+    return _serverName;
+}
+
 void	server::handleCommands(int fd, std::vector<std::string> parsed) {
 	std::string command = parsed[0];
 
@@ -262,6 +395,8 @@ void	server::handleCommands(int fd, std::vector<std::string> parsed) {
 		handlePrvMsg(fd, parsed);
 	else if (command == "JOIN")
 		handleJoin(fd, parsed);
+	else if (command == "TOPIC")
+		handleTopic(fd, parsed);	
 	else if (command == "QUIT")
 		handleQuit(fd, parsed);
 	else
@@ -297,13 +432,18 @@ std::vector<int> server::findTarget(std::string target)
 void server::handlePrvMsg(int fd, std::vector<std::string> parsed)
 {
 	// :nickname!usrname@hostname
-	std::string prefix;
-	prefix = ":" + _clients[fd].getNickname() + "!" + _clients[fd].getUsername() + "@" + _clients[fd].getHostname() + " ";
+	if (!_clients[fd].isRegistered())
+	{
+		std::cout << "You need to register before joining a channel" << std::endl;
+		return;
+	}
 	if (parsed.size() < 3)
 	{
 		std::cout << "Wrong number of arguments" << std::endl;
 		return;
 	}
+	std::string prefix;
+	prefix = ":" + _clients[fd].getNickname() + "!" + _clients[fd].getUsername() + "@" + _clients[fd].getHostname() + " ";
 	std::string target = parsed[1];
 	std::string message = prefix + parsed[0] + " " + target + " :" + parsed[2] + "\r\n";
 	std::vector<int>targetFds = findTarget(target);
@@ -321,7 +461,40 @@ void server::handlePrvMsg(int fd, std::vector<std::string> parsed)
 		}
 
 	}
+}
 
+void server::handleTopic(int fd, std::vector<std::string> parsed)
+{
+	std::string channelName = parsed[1];
+	std::map<std::string, channel>::iterator it = _channels.find(channelName);
+	if (it == _channels.end())
+	{
+		std::cout << "Channel does not exist" << std::endl;
+		return;
+	}
+	if (parsed.size() == 2)
+	{
+		std::string topic = it->second.getTopic();
+		std::string response = ":localhost 332 " + _clients[fd].getNickname() + " " + channelName + " :" + topic + "\r\n";
+		send(fd, response.c_str(), response.length(), 0);
+	}
+	else if (parsed.size() == 3)
+	{
+		if (!it->second.isOperator(fd))
+		{
+			std::cout << "You are not channel operator" << std::endl;
+			return;
+		}
+		it->second.setTopic(parsed[2]);
+		std::string response = ":" + _clients[fd].getNickname() + "!" + _clients[fd].getUsername() + "@localhost TOPIC " + channelName + " :" + parsed[2] + "\r\n";
+		// Broadcast to all members
+		// For simplicity, we will just send to the client who set the topic
+		send(fd, response.c_str(), response.length(), 0);
+	}
+	else
+	{
+		std::cout << "Wrong number of arguments" << std::endl;
+	}
 }
 
 void server::handleClientMessage(size_t& i)
@@ -423,6 +596,7 @@ server::server(int port, std::string password)
 {
 	_serverfd = -1;
 	_port = port;
+	_serverName = "IRCedric";
 	_password = password;
 }
 

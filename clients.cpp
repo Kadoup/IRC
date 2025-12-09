@@ -4,12 +4,13 @@
 
 void clients::checkRegistration()
 {
+    std::cout << "Checking registration for client FD " << _fd << std::endl;
     if (_authentificated && !_nickname.empty() && !_username.empty())
     {
         _registered = true;
-        // std::string welcome = ":localhost 001 " + _nickname + " :Welcome to the IRC Network " + _nickname + "!~" + _username + "@" + _hostName + "\r\n";
-        // welcome += ":localhost 004 " + _nickname + " localhost ircd-1.0 iouO lvhopsmntikrRcaqOALQbze lvhopsmntikrRcaqOALQbze\r\n";
-        // send(_fd, welcome.c_str(), welcome.length(), 0);
+        std::string welcome = ":localhost 001 " + _nickname + " :Welcome to the IRCedric " + _nickname + "!~" + _username + "@" + _hostName + "\r\n";
+        welcome += ":localhost 004 " + _nickname + " localhost ircd-1.0 iouO lvhopsmntikrRcaqOALQbze lvhopsmntikrRcaqOALQbze\r\n";
+        send(_fd, welcome.c_str(), welcome.length(), 0);
     }
 }
 

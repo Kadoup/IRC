@@ -23,6 +23,7 @@ private:
     int _serverfd;
     int _port;
     std::string _password;
+    std::string _serverName;
 public:
     void initServer();
     void runServer();
@@ -37,6 +38,8 @@ public:
     void handlePass(int fd, std::vector<std::string> parsed);
     void handleQuit(int fd, std::vector<std::string> parsed);
     void handleJoin(int fd, std::vector<std::string>& parsed);
+    void handleTopic(int fd, std::vector<std::string> parsed);
+    std::string _getServerName() const;
     std::vector<int> findTarget(std::string target);
     server(int port, std::string password);
     ~server();
