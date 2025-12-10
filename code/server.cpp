@@ -1,4 +1,13 @@
 #include "server.hpp"
+#include "command.hpp"
+#include "commands/nickCommand.hpp"
+#include "commands/userCommand.hpp"
+#include "commands/passCommand.hpp"
+#include "commands/joinCommand.hpp"
+#include "commands/privmsgCommand.hpp"
+#include "commands/topicCommand.hpp"
+#include "commands/kickCommand.hpp"
+#include "commands/quitCommand.hpp"
 
 pollfd    createPoll(int fd)
 {
@@ -42,31 +51,6 @@ void server::broadcastMessage(int senderfd, const std::string& message)
 				std::cout << "Send failed" << std::endl;
 		}
 	}
-}
-
-bool isAuthorisedChar(char c)
-{
-	if (!std::isalnum(c) &&
-			c != '[' && c != ']' && c != '\\' && 
-			c != '`' && c != '_' && c != '^' && 
-			c != '{' && c != '|' && c != '}')
-		return false;
-	return true;
-}
-
-bool isValidNickname(const std::string& param)
-{
-	if (param.empty() || param.length() > 9)
-		return false;
-	char first = param[0];
-	if(!isAuthorisedChar(first))
-		 return false;
-	for(size_t i = 1; i < param.length(); ++i)
-	{
-		if (!isAuthorisedChar(param[i]) && param[i] != '-')
-			return false;
-	}
-	return true;
 }
 
 std::vector<std::string> parseCommand(std::string buffer)
@@ -114,69 +98,30 @@ bool server::isUniqueNickname(std::string nick)
 	return true;
 }
 
-void	server::handleNick(int fd, const std::vector<std::string>& parsed)
-{
-	if (parsed.size() != 2)
-		std::cout << "Wrong number of arguments" << std::endl;
-	else {
-		if (!isValidNickname(parsed[1]))
-			std::cout << "Bad nickname" << std::endl;
-		else if (!isUniqueNickname(parsed[1]))
-			std::cout << "Nickname is not unique" << std::endl;
-		else {
-			_clients[fd].setNickname(parsed[1]);
-		}
-	}
+std::string server::getPassword() const {
+    return _password;
 }
 
-void server::handleUser(int fd, const std::vector<std::string>& parsed)
-{
-	if (parsed.size() != 5)
-		std::cout << "Wrong number of arguments" << std::endl;
-	else {
-		if (!isValidNickname(parsed[1]))
-			std::cout << "Bad Username" << std::endl;
-		else {
-			_clients[fd].setUsername(parsed[1]);
-		}
-		_clients[fd].setRealName(parsed[4]);
-	}
+clients& server::getClient(int fd) {
+    return _clients[fd];
 }
 
-void server::handlePass(int fd, const std::vector<std::string>& parsed)
-{
-	if (parsed.size() != 2)
-		std::cout << "Wrong number of arguments" << std::endl;
-	if (_clients[fd].isAuthentificated())
-		std::cout << "You are already authenticated" << std::endl;
-	else
-	{
-		if (parsed[1] == _password)
-		{
-			std::cout << "Welcome " << _clients[fd].getNickname() << std::endl;
-			_clients[fd].setAuthentificated(true);
-		}
-		else
-			std::cout << "Wrong Password" << std::endl;
-	}
+std::map<std::string, channel>& server::getChannels() {
+    return _channels;
 }
 
-void server::handleQuit(int fd, const std::vector<std::string>& parsed)
-{
-	if (parsed.size() > 2)
-		std::cout << "Wrong number of arguments" << std::endl;
-	else {
-		close(fd);
-		_clients.erase(fd);
-		for (size_t i = 0; i < _fds.size(); ++i)
-		{
-			if (fd == _fds[i].fd)
-			{
-				_fds.erase(_fds.begin() + i);
-				break;
-			}
-		}
-	}
+std::map<int, clients>& server::getClients() {
+    return _clients;
+}
+
+void server::removeClient(int fd) {
+    _clients.erase(fd);
+    for (size_t i = 0; i < _fds.size(); ++i) {
+        if (fd == _fds[i].fd) {
+            _fds.erase(_fds.begin() + i);
+            break;
+        }
+    }
 }
 
 void printParsed(const std::vector<std::string>& parsed)
@@ -188,180 +133,35 @@ void printParsed(const std::vector<std::string>& parsed)
 	}
 }
 
-void server::handleJoin(int fd, const std::vector<std::string>& parsed)
-{
-	if (!_clients[fd].isRegistered())
-	{
-		std::cout << "You need to register before joining a channel" << std::endl;
-		return;
-	}
-	if (parsed.size() < 2)
-		std::cout << "Wrong number of arguments" << std::endl;
-	else
-	{
-		char prefix = parsed[1][0];
-		if (prefix != '#' && prefix != '&' && prefix != '!' && prefix != '+')
-		{
-			std::cout << "Invalid channel name : must start with #,&,! or +" << std::endl;
-			return;
-		}
-		if (parsed[1].length() > 50)
-		{
-			std::cout << "Channel name too long (max 50 characters)" << std::endl;
-			return;
-		}
-		for (size_t i = 1; i < parsed[1].length(); ++i)
-		{
-			if (!isAuthorisedChar(parsed[1][i]) && parsed[1][i] != '-')
-				return;
-		}
-		if (_channels.find(parsed[1]) != _channels.end())
-		{
-			_channels[parsed[1]].addMember(fd, &_clients[fd]);
-			// return;
-		}
-		else {
-			std::cout << "Creating channel: " << parsed[1] << std::endl;
-            std::cout << "Client nickname: " << _clients[fd].getNickname() << std::endl;
-			std::cout << "Client username: " << _clients[fd].getUsername() << std::endl;
-			channel newChannel(parsed[1], &_clients[fd]);
-			_channels[parsed[1]] = newChannel;
-			// std::cout << "Channel " << parsed[1] << " created by " << _channels[parsed[1]].getCreator()->getNickname() << std::endl;
-		}
-		std::string response = ":" + _clients[fd].getNickname() + "!" + 
-						_clients[fd].getUsername() + "@localhost JOIN " + 
-						parsed[1] + "\r\n";
-		send(fd, response.c_str(), response.length(), 0);
-		std::string topic = _channels[parsed[1]].getTopic();
-		std::cout << "Topic for channel " << parsed[1] << ": " << topic << std::endl;
-		response = ":localhost 332 " + _clients[fd].getNickname() + 
-				" " + parsed[1] + " :" + topic + "\r\n";
-		send(fd, response.c_str(), response.length(), 0);
-		std::string namesList;
-		std::map<int, clients*> members = _channels[parsed[1]].getMembers();
-		std::map<int, clients*>::iterator memberIt;
-		for (memberIt = members.begin(); memberIt != members.end(); ++memberIt)
-		{
-			if (_channels[parsed[1]].isOperator(memberIt->first))
-				namesList += "@";
-			namesList += memberIt->second->getNickname();
-			namesList += " ";
-		}
-		response = ":" + _clients[fd].getNickname() + "!" + 
-								_clients[fd].getUsername() + "@localhost JOIN " + 
-								parsed[1] + "\r\n";
-			send(fd, response.c_str(), response.length(), 0);
-		response = ":localhost 353 " + _clients[fd].getNickname() + 
-				" = " + parsed[1] + " :" + namesList + "\r\n";
-		send(fd, response.c_str(), response.length(), 0);
-		response = ":localhost 366 " + _clients[fd].getNickname() + 
-				" " + parsed[1] + " :End of /NAMES list\r\n";
-		send(fd, response.c_str(), response.length(), 0);
-	}
-}
-
 std::string server::_getServerName() const
 {
     return _serverName;
-}
-
-void server::handleKick(int fd, const std::vector<std::string>& parsed)
-{
-	if (parsed.size() < 3)
-	{
-		std::cout << "Wrong number of arguments" << std::endl;
-		return;
-	}
-	std::string channelName = parsed[1];
-	std::string targetNick = parsed[2];
-
-	std::map<std::string, channel>::iterator chanIt = _channels.find(channelName);
-	if (chanIt == _channels.end())
-	{
-		std::cout << "Channel does not exist" << std::endl;
-		return;
-	}
-	if (!chanIt->second.isOperator(fd))
-	{
-		std::cout << "You are not channel operator" << std::endl;
-		return;
-	}
-	int targetFd = -1;
-	std::map<int, clients>::iterator clientIt;
-	for (clientIt = _clients.begin(); clientIt != _clients.end(); ++clientIt)
-	{
-		if (clientIt->second.getNickname() == targetNick)
-		{
-			targetFd = clientIt->first;
-			break;
-		}
-	}
-
-	if (targetFd == -1)
-	{
-		std::cout << "User not found" << std::endl;
-		return;
-	}
-
-	if (!chanIt->second.isMember(targetFd))
-	{
-		std::cout << "User is not in the channel" << std::endl;
-		return;
-	}
-
-	chanIt->second.removeMember(targetFd);
-
-	std::string reason = parsed.size() > 3 ? parsed[3] : targetNick;
-	std::string response = ":" + _clients[fd].getNickname() + "!" + 
-						_clients[fd].getUsername() + "@localhost KICK " + 
-						channelName + " " + targetNick + " :" + reason + "\r\n";
-
-	std::map<int, clients*> members = chanIt->second.getMembers();
-	for (std::map<int, clients*>::iterator it = members.begin(); it != members.end(); ++it)
-	{
-		send(it->first, response.c_str(), response.length(), 0);
-	}
-	send(targetFd, response.c_str(), response.length(), 0);
 }
 
 // void server::registerCommand(const std::string& name, const command& cmd) {
 // 	commandMap[name] = cmd;
 // }
 
+void server::registerCommands() {
+    _commands["NICK"] = new NickCommand(this);
+    _commands["USER"] = new UserCommand(this);
+    _commands["PASS"] = new PassCommand(this);
+    _commands["JOIN"] = new JoinCommand(this);
+    _commands["PRIVMSG"] = new PrivmsgCommand(this);
+    _commands["TOPIC"] = new TopicCommand(this);
+    _commands["KICK"] = new KickCommand(this);
+    _commands["QUIT"] = new QuitCommand(this);
+}
+
 void	server::handleCommands(int fd, const std::vector<std::string>& parsed) {
 	std::string command = parsed[0];
 
-	// struct commandContext {
-	// 	fd;
-	// 	parsed;
-	// 	this;
-	// } ctx;
-	// ctx.fd = fd;
-	// ctx.parsed = parsed;
-	// ctx.this = this;
-	// command cmd = commandMap.find(command);
-	// if (cmd != commandMap.end()) {
-	// 	cmd->second.execute(ctx);
-	// 	return;
-	// }
-	if (command == "NICK")
-		handleNick(fd, parsed);
-	else if (command == "USER")
-		handleUser(fd, parsed);
-	else if (command == "PASS")
-		handlePass(fd, parsed);
-	else if (command == "PRIVMSG")
-		handlePrvMsg(fd, parsed);
-	else if (command == "JOIN")
-		handleJoin(fd, parsed);
-	else if (command == "TOPIC")
-		handleTopic(fd, parsed);
-	else if (command == "KICK")
-		handleKick(fd, parsed);
-	else if (command == "QUIT")
-		handleQuit(fd, parsed);
-	else
+	std::map<std::string, Command*>::iterator it = _commands.find(command);
+	if (it != _commands.end()) {
+		it->second->execute(fd, parsed);
+	} else {
 		std::cout << "Wrong command" << std::endl;
+	}
 }
 
 std::vector<int> server::findTarget(std::string target, int senderFd)
@@ -406,82 +206,6 @@ std::vector<int> server::findTarget(std::string target, int senderFd)
 			targetFds.push_back(-1);
 	}
 	return targetFds;
-}
-
-void server::handlePrvMsg(int fd, const std::vector<std::string>& parsed)
-{
-	// :nickname!usrname@hostname
-	if (!_clients[fd].isRegistered())
-	{
-		std::cout << "You need to register before joining a channel" << std::endl;
-		return;
-	}
-	if (parsed.size() < 3)
-	{
-		std::cout << "Wrong number of arguments" << std::endl;
-		return;
-	}
-	std::string prefix;
-	prefix = ":" + _clients[fd].getNickname() + "!" + _clients[fd].getUsername() + "@" + _clients[fd].getHostname() + " ";
-	std::string target = parsed[1];
-	std::string message = prefix + parsed[0] + " " + target + " :" + parsed[2] + "\r\n";
-	std::vector<int>targetFds = findTarget(target, fd);
-	for (size_t i = 0; i < targetFds.size(); ++i)
-	{
-		if (targetFds[i] != -1)
-		{
-			int sent = send(targetFds[i], message.c_str(), message.length(), 0);
-			if (sent == -1)
-				std::cout << "Send failed" << std::endl;
-		}
-		else
-		{
-			std::cout << "No user called like that bro" << std::endl;
-		}
-
-	}
-}
-
-void server::handleTopic(int fd, const std::vector<std::string>& parsed)
-{
-	std::string channelName = parsed[1];
-	std::map<std::string, channel>::iterator it = _channels.find(channelName);
-	if (it == _channels.end())
-	{
-		std::cout << "Channel does not exist" << std::endl;
-		return;
-	}
-	if (parsed.size() == 2)
-	{
-		std::string topic = it->second.getTopic();
-		std::string response = ":localhost 332 " + _clients[fd].getNickname() + " " + channelName + " :" + topic + "\r\n";
-		send(fd, response.c_str(), response.length(), 0);
-	}
-	else if (parsed.size() == 3)
-	{
-		if (!it->second.isOperator(fd))
-		{
-			std::cout << "You are not channel operator" << std::endl;
-			return;
-		}
-		it->second.setTopic(parsed[2]);
-		std::string response = ":" + _clients[fd].getNickname() + "!" + _clients[fd].getUsername() + "@localhost TOPIC " + channelName + " :" + parsed[2] + "\r\n";
-		std::map<int, clients*> members = it->second.getMembers();
-		for (std::map<int, clients*>::iterator memberIt = members.begin(); memberIt != members.end(); ++memberIt)
-		{
-			// if (memberIt->first == fd)
-			// 	continue;
-			int memberFd = memberIt->first;
-			send(memberFd, response.c_str(), response.length(), 0);
-		}
-		// Broadcast to all members
-		// For simplicity, we will just send to the client who set the topic
-		// send(fd, response.c_str(), response.length(), 0);
-	}
-	else
-	{
-		std::cout << "Wrong number of arguments" << std::endl;
-	}
 }
 
 void server::handleClientMessage(size_t& i)
@@ -585,10 +309,17 @@ server::server(int port, std::string password)
 	_port = port;
 	_serverName = "IRCedric";
 	_password = password;
+	registerCommands();
 }
 
 server::~server()
 {
+	for (std::map<std::string, Command*>::iterator it = _commands.begin(); 
+	     it != _commands.end(); ++it) {
+		delete it->second;
+	}
+	_commands.clear();
+	
 	close(_serverfd);
 	for (size_t i = 0; i < _fds.size(); ++i)
 	{
