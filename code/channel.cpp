@@ -7,6 +7,7 @@ channel::channel(std::string name, clients *creator) : _creator(creator)
 	addMember(creator->getFd(), creator);
 	_topic = "No topic is set";
 	_inviteOnly = false;
+	_passwordProtected = false;
 }
 
 void channel::addMember(int clientFd, clients *client)
@@ -76,6 +77,22 @@ void channel::setInviteOnly(bool inviteOnly)
 	_inviteOnly = inviteOnly;
 }
 
+void channel::setPasswordProtected(bool passwordProtected)
+{
+	_passwordProtected = passwordProtected;
+}
+
+void channel::broadcastMessage(int senderFd, const std::string &message)
+{
+	std::map<int, clients *>::iterator it;
+	for (it = _members.begin(); it != _members.end(); ++it)
+	{
+		int memberFd = it->first;
+		if (memberFd != senderFd)
+			send(memberFd, message.c_str(), message.length(), 0);
+	}
+}
+
 std::string channel::getTopic() const
 {
 	return (_topic);
@@ -99,6 +116,11 @@ std::map<int, clients *> channel::getInvited() const
 bool channel::getInviteOnly() const
 {
     return _inviteOnly;
+}
+
+bool channel::getPasswordProtected() const
+{
+    return _passwordProtected;
 }
 
 channel::channel()

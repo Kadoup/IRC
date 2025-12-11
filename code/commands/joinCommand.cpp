@@ -17,13 +17,13 @@ bool JoinCommand::isInvited(int fd, channel& chan) {
 }
 
 void JoinCommand::execute(int fd, const std::vector<std::string>& parsed) {
-    if (!_server->getClient(fd).isRegistered()) {
-        std::cout << "You need to register before joining a channel" << std::endl;
+    
+    if (parsed.size() != 2 && parsed.size() != 3) {
+        std::cout << "Wrong number of arguments" << std::endl;
         return;
     }
-    
-    if (parsed.size() < 2) {
-        std::cout << "Wrong number of arguments" << std::endl;
+    if (!_server->getClient(fd).isRegistered()) {
+        std::cout << "You need to register before joining a channel" << std::endl;
         return;
     }
     char prefix = parsed[1][0];

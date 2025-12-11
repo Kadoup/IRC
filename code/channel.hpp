@@ -4,6 +4,7 @@
 #include <vector>
 #include <map>
 #include <set>
+#include <sys/socket.h>
 
 #include "clients.hpp"
 
@@ -16,6 +17,7 @@ private:
     clients* _creator;
     std::string _topic;
     bool _inviteOnly;
+    bool _passwordProtected;
     std::map<int, clients*> _invited;
     
     public:
@@ -29,11 +31,14 @@ private:
     std::map<int, clients*> getMembers() const;
     std::map<int, clients*> getInvited() const;
     bool getInviteOnly() const;
+    bool getPasswordProtected() const;
     bool isOperator(int clientFd) const;
     void addOperator(int clientFd);
     void removeOperator(int clientFd);
     void setTopic(const std::string& topic);
 	void setInviteOnly(bool inviteOnly);
+    void setPasswordProtected(bool passwordProtected);
+    void broadcastMessage(int senderFd, const std::string& message);
     channel& operator=(const channel& other);
     channel(std::string name, clients* creator);
     channel(const channel& other);

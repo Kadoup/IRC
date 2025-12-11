@@ -13,6 +13,7 @@
 #include <sstream>
 #include "clients.hpp"
 #include "channel.hpp"
+#include "numReplies.hpp"
 
 class Command;
 

@@ -36,11 +36,19 @@ void NickCommand::execute(int fd, const std::vector<std::string>& parsed) {
             return;
         }
     }
+    if (_server->getClient(fd).isRegistered()) {
+        std::cout << "You are already registered, cannot change nickname" << std::endl;
+        return;
+    }
     
     if (!_server->isUniqueNickname(parsed[1])) {
         std::cout << "Nickname is not unique" << std::endl;
         return;
     }
-    
+    std::string userId = USER_IDENTIFIER(_server->getClient(fd).getNickname(), _server->getClient(fd).getUsername());
+    if (!_server->getClient(fd).getNickname().empty()) {
+        std::string response = userId + " NICK " + parsed[1] + "\r\n";
+        send(fd, response.c_str(), response.length(), 0);
+    }
     _server->getClient(fd).setNickname(parsed[1]);
 }
