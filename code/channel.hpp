@@ -15,11 +15,12 @@ private:
     std::string _name;
     clients* _creator;
     std::string _topic;
-    // bool _inviteOnly;
-    // std::map<int, clients*> _invited;
+    bool _inviteOnly;
+    std::map<int, clients*> _invited;
     
     public:
     void addMember(int clientFd, clients* client);
+    void addInvite(int clientFd, clients *client);
     void removeMember(int clientFd);
     bool isMember(int clientFd) const;
     clients* getCreator() const;
@@ -29,6 +30,7 @@ private:
     void addOperator(int clientFd);
     void removeOperator(int clientFd);
     void setTopic(const std::string& topic);
+	void setInviteOnly(bool inviteOnly);
     channel& operator=(const channel& other);
     channel(std::string name, clients* creator);
     channel(const channel& other);

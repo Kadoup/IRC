@@ -1,7 +1,9 @@
 #include "userCommand.hpp"
 #include "../server.hpp"
 
-UserCommand::UserCommand(server* srv) : Command(srv) {}
+UserCommand::UserCommand(server* srv) : Command(srv) {
+	
+}
 
 void UserCommand::execute(int fd, const std::vector<std::string>& parsed) {
     if (parsed.size() != 5) {

@@ -36,11 +36,12 @@ public:
     void broadcastMessage(int senderfd, const std::string& message);
     void connectClient();
     void handleClientMessage(size_t& i);
+	channel* getChannel(const std::string& name);
     void handleCommands(int fd, const std::vector<std::string>& parsed);
     bool isUniqueNickname(std::string nick);
     std::string _getServerName() const;
     std::vector<int> findTarget(std::string target, int senderFd);
-
+	int findClientByNickname(const std::string& nickname);
     std::string getPassword() const;
     clients& getClient(int fd);
     std::map<int, clients>& getClients();

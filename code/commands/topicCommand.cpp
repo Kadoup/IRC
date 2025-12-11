@@ -1,7 +1,9 @@
 #include "topicCommand.hpp"
 #include "../server.hpp"
 
-TopicCommand::TopicCommand(server* srv) : Command(srv) {}
+TopicCommand::TopicCommand(server* srv) : Command(srv) {
+	
+}
 
 void TopicCommand::execute(int fd, const std::vector<std::string>& parsed) {
     std::string channelName = parsed[1];

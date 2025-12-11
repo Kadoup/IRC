@@ -1,7 +1,9 @@
 #include "kickCommand.hpp"
 #include "../server.hpp"
 
-KickCommand::KickCommand(server* srv) : Command(srv) {}
+KickCommand::KickCommand(server* srv) : Command(srv) {
+	
+}
 
 void KickCommand::execute(int fd, const std::vector<std::string>& parsed) {
     if (parsed.size() < 3) {

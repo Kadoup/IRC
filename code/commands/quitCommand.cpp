@@ -1,7 +1,9 @@
 #include "quitCommand.hpp"
 #include "../server.hpp"
 
-QuitCommand::QuitCommand(server* srv) : Command(srv) {}
+QuitCommand::QuitCommand(server* srv) : Command(srv) {
+	
+}
 
 void QuitCommand::execute(int fd, const std::vector<std::string>& parsed) {
     if (parsed.size() > 2) {

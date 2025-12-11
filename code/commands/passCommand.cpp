@@ -1,7 +1,9 @@
 #include "passCommand.hpp"
 #include "../server.hpp"
 
-PassCommand::PassCommand(server* srv) : Command(srv) {}
+PassCommand::PassCommand(server* srv) : Command(srv) {
+	
+}
 
 void PassCommand::execute(int fd, const std::vector<std::string>& parsed) {
     if (parsed.size() != 2) {

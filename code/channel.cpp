@@ -1,79 +1,89 @@
 #include "channel.hpp"
 
-void channel::addMember(int clientFd, clients* client)
+channel::channel(std::string name, clients *creator) : _creator(creator)
 {
-    _members[clientFd] = client;
+	_name = name;
+	_operators.insert(creator->getFd());
+	addMember(creator->getFd(), creator);
+	_topic = "No topic is set";
+	_inviteOnly = false;
+}
+
+void channel::addMember(int clientFd, clients *client)
+{
+	_members[clientFd] = client;
 }
 
 clients *channel::getCreator() const
 {
-    return _creator;
+	return (_creator);
 }
 
+void channel::addInvite(int clientFd, clients *client)
+{
+	_invited[clientFd] = client;
+}
 void channel::addOperator(int clientFd)
 {
-    _operators.insert(clientFd);
+	_operators.insert(clientFd);
 }
 
 void channel::removeOperator(int clientFd)
 {
-    _operators.erase(clientFd);
+	_operators.erase(clientFd);
 }
 
 bool channel::isOperator(int clientFd) const
 {
-    return _operators.find(clientFd) != _operators.end();
+	return (_operators.find(clientFd) != _operators.end());
 }
 
-channel::channel(std::string name, clients* creator) : _creator(creator)
+channel::channel(const channel &other)
 {
-    _name = name;
-    _operators.insert(creator->getFd());
-    addMember(creator->getFd(), creator);
-    _topic = "No topic is set";
+	*this = other;
 }
 
-channel::channel(const channel& other)
+channel &channel::operator=(const channel &other)
 {
-    *this = other;
-}
-
-channel& channel::operator=(const channel& other)
-{
-    if (this != &other)
-    {
-        _name = other._name;
-        _creator = other._creator;
-        _operators = other._operators;
-        _topic = other._topic;
-        _members = other._members;
-    }
-    return *this;
+	if (this != &other)
+	{
+		_name = other._name;
+		_creator = other._creator;
+		_operators = other._operators;
+		_topic = other._topic;
+		_members = other._members;
+	}
+	return (*this);
 }
 
 void channel::removeMember(int clientFd)
 {
-    _members.erase(clientFd);
+	_members.erase(clientFd);
 }
 
 bool channel::isMember(int clientFd) const
 {
-    return _members.find(clientFd) != _members.end();
+	return (_members.find(clientFd) != _members.end());
 }
 
-void channel::setTopic(const std::string& topic)
+void channel::setTopic(const std::string &topic)
 {
-    _topic = topic;
+	_topic = topic;
+}
+
+void channel::setInviteOnly(bool inviteOnly)
+{
+	_inviteOnly = inviteOnly;
 }
 
 std::string channel::getTopic() const
 {
-    return _topic;
+	return (_topic);
 }
 
-std::map<int, clients*> channel::getMembers() const
+std::map<int, clients *> channel::getMembers() const
 {
-    return _members;
+	return (_members);
 }
 
 channel::channel()

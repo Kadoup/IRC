@@ -1,7 +1,9 @@
 #include "joinCommand.hpp"
 #include "../server.hpp"
 
-JoinCommand::JoinCommand(server* srv) : Command(srv) {}
+JoinCommand::JoinCommand(server* srv) : Command(srv) {
+	
+}
 
 void JoinCommand::execute(int fd, const std::vector<std::string>& parsed) {
     if (!_server->getClient(fd).isRegistered()) {

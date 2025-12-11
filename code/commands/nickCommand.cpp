@@ -1,7 +1,9 @@
 #include "nickCommand.hpp"
 #include "../server.hpp"
 
-NickCommand::NickCommand(server* srv) : Command(srv) {}
+NickCommand::NickCommand(server* srv) : Command(srv) {
+	
+}
 
 void NickCommand::execute(int fd, const std::vector<std::string>& parsed) {
     if (parsed.size() != 2) {

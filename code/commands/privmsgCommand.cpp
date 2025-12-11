@@ -1,7 +1,9 @@
 #include "privmsgCommand.hpp"
 #include "../server.hpp"
 
-PrivmsgCommand::PrivmsgCommand(server* srv) : Command(srv) {}
+PrivmsgCommand::PrivmsgCommand(server* srv) : Command(srv) {
+	
+}
 
 void PrivmsgCommand::execute(int fd, const std::vector<std::string>& parsed) {
     if (!_server->getClient(fd).isRegistered()) {
