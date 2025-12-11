@@ -81,9 +81,24 @@ std::string channel::getTopic() const
 	return (_topic);
 }
 
+std::string channel::getName() const
+{
+    return _name;
+}
+
 std::map<int, clients *> channel::getMembers() const
 {
 	return (_members);
+}
+
+std::map<int, clients *> channel::getInvited() const
+{
+    return _invited;
+}
+
+bool channel::getInviteOnly() const
+{
+    return _inviteOnly;
 }
 
 channel::channel()

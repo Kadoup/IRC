@@ -25,7 +25,10 @@ private:
     bool isMember(int clientFd) const;
     clients* getCreator() const;
     std::string getTopic() const;
+    std::string getName() const;
     std::map<int, clients*> getMembers() const;
+    std::map<int, clients*> getInvited() const;
+    bool getInviteOnly() const;
     bool isOperator(int clientFd) const;
     void addOperator(int clientFd);
     void removeOperator(int clientFd);

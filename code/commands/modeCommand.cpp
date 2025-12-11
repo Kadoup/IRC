@@ -5,7 +5,7 @@ ModeCommand::ModeCommand(server* srv) : Command(srv) {
 	
 }
 
-bool ModeCommand::channelExists(server* srv, int fd, const std::string& target) {
+bool ModeCommand::channelExists(int fd, const std::string& target) {
 	channel* chan = _server->getChannel(target);
 	if (!chan) {
 		std::cout << "No such channel" << std::endl;
@@ -19,7 +19,7 @@ bool ModeCommand::channelExists(server* srv, int fd, const std::string& target) 
 }
 
 void ModeCommand::execute(int fd, const std::vector<std::string>& parsed) {
-	if (parsed.size() < 2) {
+	if (parsed.size() != 2 && parsed.size() != 3) {
 		std::cout << "Wrong number of arguments" << std::endl;
 		return;
 	}
@@ -30,7 +30,7 @@ void ModeCommand::execute(int fd, const std::vector<std::string>& parsed) {
 	}
 	if (parsed.size() == 2) {
 		if (target[0] == '#' || target[0] == '&' || target[0] == '+' || target[0] == '!') {
-			if (channelExists(_server, fd, parsed[1])) {
+			if (channelExists(fd, parsed[1])) {
 				std::string _response = ":localhost 324 " + _server->getClient(fd).getNickname() + 
 										" " + parsed[1] + " " + _modes + "\r\n";
 				send(fd, _response.c_str(), _response.length(), 0);
@@ -40,14 +40,14 @@ void ModeCommand::execute(int fd, const std::vector<std::string>& parsed) {
 			std::cout << "User modes are not supported" << std::endl;
 	}
 	else {
-		if (parsed[3] != "+" && parsed[3] != "-") {
+		if (parsed[2][0] != '+' && parsed[2][0] != '-') {
 			std::cout << "Invalid mode format" << std::endl;
 			return;
 		}
 		if (target[0] == '#' || target[0] == '&' || target[0] == '+' || target[0] == '!') {
-			if (channelExists(_server, fd, parsed[1])) {
-				if (parsed[3][0] == '+') {
-					if (parsed[2] == "i") {
+			if (channelExists(fd, parsed[1])) {
+				if (parsed[2][0] == '+') {
+					if (parsed[2][1] == 'i') {
 						channel* chan = _server->getChannel(target);
 						chan->setInviteOnly(true);
 						std::string response = ":" + _server->getClient(fd).getNickname() + "!" +
@@ -60,7 +60,7 @@ void ModeCommand::execute(int fd, const std::vector<std::string>& parsed) {
 							send(memberFd, response.c_str(), response.length(), 0);
 						}
 					}
-					else if (parsed[2] == "o") {
+					else if (parsed[2][1] == 'o') {
 						channel* chan = _server->getChannel(target);
 						chan->addOperator(fd);
 						std::cout << "You are now channel operator for " << target << std::endl;
@@ -68,9 +68,9 @@ void ModeCommand::execute(int fd, const std::vector<std::string>& parsed) {
 						std::cout << "Unknown mode to add" << std::endl;
 					}
 				}
-				else if (parsed[3][0] == '-')
+				else if (parsed[2][0] == '-')
 				{
-					if (parsed[2] == "i") {
+					if (parsed[2][1] == 'i') {
 						channel* chan = _server->getChannel(target);
 						chan->setInviteOnly(false);
 						std::string response = ":" + _server->getClient(fd).getNickname() + "!" +
@@ -83,7 +83,7 @@ void ModeCommand::execute(int fd, const std::vector<std::string>& parsed) {
 							send(memberFd, response.c_str(), response.length(), 0);
 						}
 					}
-					else if (parsed[2] == "o") {
+					else if (parsed[2][1] == 'o') {
 						channel* chan = _server->getChannel(target);
 						chan->removeOperator(fd);
 						std::cout << "You are no longer channel operator for " << target << std::endl;

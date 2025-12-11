@@ -5,6 +5,17 @@ JoinCommand::JoinCommand(server* srv) : Command(srv) {
 	
 }
 
+bool JoinCommand::isInvited(int fd, channel& chan) {
+    std::map<int, clients*> invited = chan.getInvited();
+    if (invited.find(fd) == invited.end()) {
+        std::string response = ":localhost 473 " + _server->getClient(fd).getNickname() +
+                            " " + chan.getName() + " :Cannot join channel (+i)\r\n";
+        send(fd, response.c_str(), response.length(), 0);
+        return false;
+    }
+    return true;
+}
+
 void JoinCommand::execute(int fd, const std::vector<std::string>& parsed) {
     if (!_server->getClient(fd).isRegistered()) {
         std::cout << "You need to register before joining a channel" << std::endl;
@@ -15,7 +26,6 @@ void JoinCommand::execute(int fd, const std::vector<std::string>& parsed) {
         std::cout << "Wrong number of arguments" << std::endl;
         return;
     }
-    
     char prefix = parsed[1][0];
     if (prefix != '#' && prefix != '&' && prefix != '!' && prefix != '+') {
         std::cout << "Invalid channel name : must start with #,&,! or +" << std::endl;
@@ -36,8 +46,17 @@ void JoinCommand::execute(int fd, const std::vector<std::string>& parsed) {
             return;
         }
     }
-    
-    // Join logic
+    if (_server->getChannels().find(parsed[1]) != _server->getChannels().end()) {
+        channel& chan = _server->getChannels()[parsed[1]];
+        if (chan.isMember(fd)) {
+            std::cout << "You are already a member of this channel" << std::endl;
+            return;
+        }
+        if (chan.getInviteOnly() && !isInvited(fd, chan)) {
+            std::cout << "You are not invited to this invite-only channel" << std::endl;
+            return;
+        }
+    }
     std::map<std::string, channel>& channels = _server->getChannels();
     if (channels.find(parsed[1]) != channels.end()) {
         channels[parsed[1]].addMember(fd, &_server->getClient(fd));

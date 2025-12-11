@@ -8,6 +8,8 @@
 #include "commands/topicCommand.hpp"
 #include "commands/kickCommand.hpp"
 #include "commands/quitCommand.hpp"
+#include "commands/modeCommand.hpp"
+#include "commands/inviteCommand.hpp"
 
 pollfd    createPoll(int fd)
 {
@@ -151,6 +153,8 @@ void server::registerCommands() {
 	_commands["TOPIC"] = new TopicCommand(this);
 	_commands["KICK"] = new KickCommand(this);
 	_commands["QUIT"] = new QuitCommand(this);
+	_commands["MODE"] = new ModeCommand(this);
+	_commands["INVITE"] = new InviteCommand(this);
 }
 
 void	server::handleCommands(int fd, const std::vector<std::string>& parsed) {
