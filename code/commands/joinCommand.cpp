@@ -67,16 +67,13 @@ void JoinCommand::execute(int fd, const std::vector<std::string>& parsed) {
         channel newChannel(parsed[1], &_server->getClient(fd));
         channels[parsed[1]] = newChannel;
     }
-    
-    std::string response = ":" + _server->getClient(fd).getNickname() + "!" + 
-                    _server->getClient(fd).getUsername() + "@localhost JOIN " + 
-                    parsed[1] + "\r\n";
+    std::string userId = USER_IDENTIFIER(_server->getClient(fd).getNickname(), _server->getClient(fd).getUsername());
+    std::string response = userId + " JOIN " + parsed[1] + "\r\n";
     send(fd, response.c_str(), response.length(), 0);
     
     std::string topic = channels[parsed[1]].getTopic();
     std::cout << "Topic for channel " << parsed[1] << ": " << topic << std::endl;
-    response = ":localhost 332 " + _server->getClient(fd).getNickname() + 
-            " " + parsed[1] + " :" + topic + "\r\n";
+    response = RPL_TOPIC(userId, _server->getClient(fd).getNickname(), parsed[1], topic);
     send(fd, response.c_str(), response.length(), 0);
     
     std::string namesList;
@@ -88,15 +85,11 @@ void JoinCommand::execute(int fd, const std::vector<std::string>& parsed) {
         namesList += memberIt->second->getNickname();
         namesList += " ";
     }
-    
-    response = ":" + _server->getClient(fd).getNickname() + "!" + 
-                            _server->getClient(fd).getUsername() + "@localhost JOIN " + 
-                            parsed[1] + "\r\n";
+    std::string userId = USER_IDENTIFIER(_server->getClient(fd).getNickname(), _server->getClient(fd).getUsername());
+    response = userId + " JOIN " + parsed[1] + "\r\n";
     send(fd, response.c_str(), response.length(), 0);
-    response = ":localhost 353 " + _server->getClient(fd).getNickname() + 
-            " = " + parsed[1] + " :" + namesList + "\r\n";
+    response = RPL_NAMREPLY(userId, _server->getClient(fd).getNickname(), "=", parsed[1], namesList);
     send(fd, response.c_str(), response.length(), 0);
-    response = ":localhost 366 " + _server->getClient(fd).getNickname() + 
-            " " + parsed[1] + " :End of /NAMES list\r\n";
+    response = RPL_ENDOFNAMES(userId, _server->getClient(fd).getNickname(), parsed[1]);
     send(fd, response.c_str(), response.length(), 0);
 }
