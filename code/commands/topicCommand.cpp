@@ -18,12 +18,15 @@ void TopicCommand::execute(int fd, const std::vector<std::string>& parsed) {
     std::string userId = USER_IDENTIFIER(_server->getClient(fd).getNickname(), _server->getClient(fd).getUsername());
     if (parsed.size() == 2) {
         std::string topic = it->second.getTopic();
-        std::string response = userId + RPL_TOPIC(userId, _server->getClient(fd).getNickname(), channelName, topic);
+        std::string response = RPL_TOPIC(userId, _server->getClient(fd).getNickname(), channelName, topic);
         send(fd, response.c_str(), response.length(), 0);
     } else if (parsed.size() == 3) {
-        if (!it->second.isOperator(fd)) {
-            std::cout << "You are not channel operator" << std::endl;
-            return;
+        if (!it->second.getReservedTopic() == true)
+        {
+            if (!it->second.isOperator(fd)) {
+                std::cout << "You are not channel operator" << std::endl;
+                return;
+            }
         }
         it->second.setTopic(parsed[2]);
         std::string response = userId + " TOPIC " + channelName + " :" + parsed[2] + "\r\n";

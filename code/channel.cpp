@@ -8,6 +8,9 @@ channel::channel(std::string name, clients *creator) : _creator(creator)
 	_topic = "No topic is set";
 	_inviteOnly = false;
 	_passwordProtected = false;
+	_reservedTopic = false;
+	_limitEnabled = false;
+	_userLimit = 0;
 }
 
 void channel::addMember(int clientFd, clients *client)
@@ -72,6 +75,21 @@ void channel::setTopic(const std::string &topic)
 	_topic = topic;
 }
 
+void channel::setReservedTopic(bool reservedTopic)
+{
+	_reservedTopic = reservedTopic;
+}
+
+void channel::setUserLimit(int limit)
+{
+	_userLimit = limit;
+}
+
+void channel::setLimitEnabled(bool limitEnabled)
+{
+	_limitEnabled = limitEnabled;
+}
+
 void channel::setInviteOnly(bool inviteOnly)
 {
 	_inviteOnly = inviteOnly;
@@ -80,6 +98,18 @@ void channel::setInviteOnly(bool inviteOnly)
 void channel::setPasswordProtected(bool passwordProtected)
 {
 	_passwordProtected = passwordProtected;
+}
+
+void channel::setPassword(const std::string &password)
+{
+	_password = password;
+}
+
+bool channel::limitReached() const
+{
+	if (!_limitEnabled)
+		return false;
+	return (_members.size() >= static_cast<size_t>(_userLimit));
 }
 
 void channel::broadcastMessage(int senderFd, const std::string &message)
@@ -103,6 +133,11 @@ std::string channel::getName() const
     return _name;
 }
 
+std::string channel::getPassword() const
+{
+    return _password;
+}
+
 std::map<int, clients *> channel::getMembers() const
 {
 	return (_members);
@@ -111,6 +146,21 @@ std::map<int, clients *> channel::getMembers() const
 std::map<int, clients *> channel::getInvited() const
 {
     return _invited;
+}
+
+bool channel::getLimitEnabled() const
+{
+    return _limitEnabled;
+}
+
+int channel::getUserLimit() const
+{
+    return _userLimit;
+}
+
+bool channel::getReservedTopic() const
+{
+    return _reservedTopic;
 }
 
 bool channel::getInviteOnly() const

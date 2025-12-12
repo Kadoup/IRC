@@ -16,6 +16,8 @@ bool JoinCommand::isInvited(int fd, channel& chan) {
     return true;
 }
 
+
+//impl password later
 void JoinCommand::execute(int fd, const std::vector<std::string>& parsed) {
     
     if (parsed.size() != 2 && parsed.size() != 3) {
@@ -55,6 +57,21 @@ void JoinCommand::execute(int fd, const std::vector<std::string>& parsed) {
         if (chan.getInviteOnly() && !isInvited(fd, chan)) {
             std::cout << "You are not invited to this invite-only channel" << std::endl;
             return;
+        }
+        if (chan.limitReached())
+        {
+            std::string response = ":localhost 471 " + _server->getClient(fd).getNickname() +
+                                " " + chan.getName() + " :Cannot join channel (+l)\r\n";
+            send(fd, response.c_str(), response.length(), 0);
+            return;
+        }
+        if (chan.getPasswordProtected()) {
+            if (parsed.size() < 3 || parsed[2] != chan.getPassword()) {
+                std::string response = ":localhost 475 " + _server->getClient(fd).getNickname() +
+                                    " " + chan.getName() + " :Cannot join channel (+k)\r\n";
+                send(fd, response.c_str(), response.length(), 0);
+                return;
+            }
         }
     }
     std::map<std::string, channel>& channels = _server->getChannels();
