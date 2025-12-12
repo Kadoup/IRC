@@ -88,7 +88,7 @@ void JoinCommand::execute(int fd, const std::vector<std::string>& parsed) {
     std::string userId = USER_IDENTIFIER(_server->getClient(fd).getNickname(), _server->getClient(fd).getUsername());
     response = userId + " JOIN " + parsed[1] + "\r\n";
     send(fd, response.c_str(), response.length(), 0);
-    response = RPL_NAMREPLY(userId, _server->getClient(fd).getNickname(), "=", parsed[1], namesList);
+    response = RPL_NAMREPLY(userId, _server->getClient(fd).getNickname(), parsed[1], namesList);
     send(fd, response.c_str(), response.length(), 0);
     response = RPL_ENDOFNAMES(userId, _server->getClient(fd).getNickname(), parsed[1]);
     send(fd, response.c_str(), response.length(), 0);

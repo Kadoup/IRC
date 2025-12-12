@@ -15,10 +15,10 @@ void TopicCommand::execute(int fd, const std::vector<std::string>& parsed) {
         return;
     }
     
+    std::string userId = USER_IDENTIFIER(_server->getClient(fd).getNickname(), _server->getClient(fd).getUsername());
     if (parsed.size() == 2) {
         std::string topic = it->second.getTopic();
-        std::string response = ":localhost 332 " + _server->getClient(fd).getNickname() + 
-                              " " + channelName + " :" + topic + "\r\n";
+        std::string response = userId + RPL_TOPIC(userId, _server->getClient(fd).getNickname(), channelName, topic);
         send(fd, response.c_str(), response.length(), 0);
     } else if (parsed.size() == 3) {
         if (!it->second.isOperator(fd)) {
@@ -26,9 +26,7 @@ void TopicCommand::execute(int fd, const std::vector<std::string>& parsed) {
             return;
         }
         it->second.setTopic(parsed[2]);
-        std::string response = ":" + _server->getClient(fd).getNickname() + "!" + 
-                              _server->getClient(fd).getUsername() + "@localhost TOPIC " + 
-                              channelName + " :" + parsed[2] + "\r\n";
+        std::string response = userId + " TOPIC " + channelName + " :" + parsed[2] + "\r\n";
         std::map<int, clients*> members = it->second.getMembers();
         for (std::map<int, clients*>::iterator memberIt = members.begin(); 
              memberIt != members.end(); ++memberIt) {

@@ -7,7 +7,7 @@
 # define RPL_CREATED(user_id, nickname, date) (user_id + " 003 " + nickname + " :This server was created " + date + "\r\n")
 # define RPL_TOPIC(user_id, nickname, channel, topic) (user_id + " 332 " + nickname + " " + channel + " :" + topic + "\r\n")
 # define RPL_NOTOPIC(user_id, nickname, channel) (user_id + " 331 " + nickname + " " + channel + " :No topic is set." + "\r\n")
-# define RPL_NAMREPLY(user_id, nickname, channelMode, channel, userList) (user_id + " 353 " + nickname + " = " + channel + " :" + userList + "\r\n")
+# define RPL_NAMREPLY(user_id, nickname, channel, userList) (user_id + " 353 " + nickname + " = " + channel + " :" + userList + "\r\n")
 # define RPL_ENDOFNAMES(user_id, nickname, channel) (user_id + " 366 " + nickname + " " + channel + " :End of /NAMES list" + "\r\n")
 # define RPL_INVITING(user_id, nickname, channel, requested) (user_id + " 341 " + nickname + " " + channel + " " + requested + "\r\n")
 # define RPL_CHANNELMODEIS(user_id, nickname, channel, mode) (user_id + " 324 " + nickname + " " + channel + " " + mode + "\r\n")
