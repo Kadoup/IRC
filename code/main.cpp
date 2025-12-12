@@ -1,5 +1,16 @@
 #include "server.hpp"
 
+void checkPort(char **argv)
+{
+    errno = 0;
+    long port = std::strtol(argv[1], NULL, 10);
+    if (errno == ERANGE || port < 1024 || port > 65535)
+    {
+        std::cerr << "Port number must be between 1 and 65535" << std::endl;
+        exit(EXIT_FAILURE);
+    }
+}
+
 int main(int argc, char **argv)
 {
 	if (argc != 3)
@@ -10,6 +21,7 @@ int main(int argc, char **argv)
     
     try
     {
+        checkPort(argv);
         server srv(std::atoi(argv[1]), argv[2]);
         // srv.registerCommand("NICK", nickCommand());
         // srv.registerCommand("USER", &server::handleUser);
