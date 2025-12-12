@@ -6,13 +6,21 @@ PrivmsgCommand::PrivmsgCommand(server* srv) : Command(srv) {
 }
 
 void PrivmsgCommand::execute(int fd, const std::vector<std::string>& parsed) {
+    std::string userId = USER_IDENTIFIER(_server->getClient(fd).getNickname(), _server->getClient(fd).getUsername());
     if (!_server->getClient(fd).isRegistered()) {
-        std::cout << "You need to register before sending messages" << std::endl;
+        std::string response = ERR_NOTREGISTERED(userId, _server->getClient(fd).getNickname());
+        send(fd, response.c_str(), response.length(), 0);
         return;
     }
     
+    if (parsed.size() < 2) {
+        std::string response = ERR_NORECIPIENT(userId, _server->getClient(fd).getNickname(), "PRIVMSG");
+        send(fd, response.c_str(), response.length(), 0);
+        return;
+    }
     if (parsed.size() < 3) {
-        std::cout << "Wrong number of arguments" << std::endl;
+        std::string response = ERR_NOTEXTTOSEND(userId, _server->getClient(fd).getNickname());
+        send(fd, response.c_str(), response.length(), 0);
         return;
     }
     
@@ -30,7 +38,8 @@ void PrivmsgCommand::execute(int fd, const std::vector<std::string>& parsed) {
             if (sent == -1)
                 std::cout << "Send failed" << std::endl;
         } else {
-            std::cout << "No user called like that bro" << std::endl;
+            std::string response = ERR_NOSUCHNICK(userId, _server->getClient(fd).getNickname(), target);
+            send(fd, response.c_str(), response.length(), 0);
         }
     }
 }

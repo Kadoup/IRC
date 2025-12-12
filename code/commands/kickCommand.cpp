@@ -6,8 +6,10 @@ KickCommand::KickCommand(server* srv) : Command(srv) {
 }
 
 void KickCommand::execute(int fd, const std::vector<std::string>& parsed) {
+    std::string userId = USER_IDENTIFIER(_server->getClient(fd).getNickname(), _server->getClient(fd).getUsername());
     if (parsed.size() < 3) {
-        std::cout << "Wrong number of arguments" << std::endl;
+        std::string response = ERR_NEEDMOREPARAMS(userId, _server->getClient(fd).getNickname(), "KICK");
+        send(fd, response.c_str(), response.length(), 0);
         return;
     }
     
@@ -17,12 +19,14 @@ void KickCommand::execute(int fd, const std::vector<std::string>& parsed) {
     
     std::map<std::string, channel>::iterator chanIt = channels.find(channelName);
     if (chanIt == channels.end()) {
-        std::cout << "Channel does not exist" << std::endl;
+        std::string response = ERR_NOSUCHCHANNEL(userId, _server->getClient(fd).getNickname(), channelName);
+        send(fd, response.c_str(), response.length(), 0);
         return;
     }
     
     if (!chanIt->second.isOperator(fd)) {
-        std::cout << "You are not channel operator" << std::endl;
+        std::string response = ERR_CHANOPRIVSNEEDED(userId, _server->getClient(fd).getNickname(), channelName);
+        send(fd, response.c_str(), response.length(), 0);
         return;
     }
     
@@ -37,12 +41,14 @@ void KickCommand::execute(int fd, const std::vector<std::string>& parsed) {
     }
 
     if (targetFd == -1) {
-        std::cout << "User not found" << std::endl;
+        std::string response = ERR_NOSUCHNICK(userId, _server->getClient(fd).getNickname(), targetNick);
+        send(fd, response.c_str(), response.length(), 0);
         return;
     }
 
     if (!chanIt->second.isMember(targetFd)) {
-        std::cout << "User is not in the channel" << std::endl;
+        std::string response = ERR_USERNOTINCHANNEL(userId, _server->getClient(fd).getNickname(), channelName, targetNick);
+        send(fd, response.c_str(), response.length(), 0);
         return;
     }
 

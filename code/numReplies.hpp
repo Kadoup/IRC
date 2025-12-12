@@ -13,6 +13,9 @@
 # define RPL_CHANNELMODEIS(user_id, nickname, channel, mode) (user_id + " 324 " + nickname + " " + channel + " " + mode + "\r\n")
 # define RPL_UMODEIS(user_id, nickname, mode) (user_id + " 221 " + nickname + " " + mode + "\r\n")
 
+# define ERR_USERONCHANNEL(user_id, nickname, channel, requested) (user_id + " 443 " + nickname + " " + channel + " " + requested + " :is already on channel" + "\r\n")
+# define ERR_NOTEXTTOSEND(user_id, nickname) (user_id + " 412 " + nickname + " :No text to send" + "\r\n")
+# define ERR_NOTREGISTERED(user_id, nickname) (user_id + " 451 " + nickname + " :You have not registered" + "\r\n")
 # define ERR_NOSUCHNICK(user_id, nickname, requested) (user_id + " 401 " + nickname + " " + requested + " :No such nick/channel" + "\r\n")
 # define ERR_NOSUCHCHANNEL(user_id, nickname, channel) (user_id + " 403 " + nickname + " " + channel + " :No such channel" + "\r\n")
 # define ERR_USERNOTINCHANNEL(user_id, nickname, channel, requested) (user_id + " 441 " + nickname + " " + channel + " " + requested + " :They aren't on that channel" + "\r\n")

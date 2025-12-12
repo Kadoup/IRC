@@ -18,22 +18,27 @@ bool JoinCommand::isInvited(int fd, channel& chan) {
 
 void JoinCommand::execute(int fd, const std::vector<std::string>& parsed) {
     
+    std::string userId = USER_IDENTIFIER(_server->getClient(fd).getNickname(), _server->getClient(fd).getUsername());
     if (parsed.size() != 2 && parsed.size() != 3) {
-        std::cout << "Wrong number of arguments" << std::endl;
+        std::string response = ERR_NEEDMOREPARAMS(userId, _server->getClient(fd).getNickname(), "JOIN");
+        send(fd, response.c_str(), response.length(), 0);
         return;
     }
     if (!_server->getClient(fd).isRegistered()) {
-        std::cout << "You need to register before joining a channel" << std::endl;
+        std::string response = ERR_NOTREGISTERED(userId, _server->getClient(fd).getNickname());
+        send(fd, response.c_str(), response.length(), 0);
         return;
     }
     char prefix = parsed[1][0];
     if (prefix != '#' && prefix != '&' && prefix != '!' && prefix != '+') {
-        std::cout << "Invalid channel name : must start with #,&,! or +" << std::endl;
+        std::string response = ERR_BADCHANMASK(userId, _server->getClient(fd).getNickname(), parsed[1]);
+        send(fd, response.c_str(), response.length(), 0);
         return;
     }
     
     if (parsed[1].length() > 50) {
-        std::cout << "Channel name too long (max 50 characters)" << std::endl;
+        std::string response = ERR_BADCHANMASK(userId, _server->getClient(fd).getNickname(), parsed[1]);
+        send(fd, response.c_str(), response.length(), 0);
         return;
     }
     
@@ -49,11 +54,13 @@ void JoinCommand::execute(int fd, const std::vector<std::string>& parsed) {
     if (_server->getChannels().find(parsed[1]) != _server->getChannels().end()) {
         channel& chan = _server->getChannels()[parsed[1]];
         if (chan.isMember(fd)) {
-            std::cout << "You are already a member of this channel" << std::endl;
+            std::string response = ERR_USERONCHANNEL(userId, _server->getClient(fd).getNickname(), parsed[1], _server->getClient(fd).getNickname());
+            send(fd, response.c_str(), response.length(), 0);
             return;
         }
         if (chan.getInviteOnly() && !isInvited(fd, chan)) {
-            std::cout << "You are not invited to this invite-only channel" << std::endl;
+            std::string response = ERR_INVITEONLYCHAN(userId, _server->getClient(fd).getNickname(), parsed[1]);
+            send(fd, response.c_str(), response.length(), 0);
             return;
         }
     }
@@ -85,8 +92,8 @@ void JoinCommand::execute(int fd, const std::vector<std::string>& parsed) {
         namesList += memberIt->second->getNickname();
         namesList += " ";
     }
-    std::string userId = USER_IDENTIFIER(_server->getClient(fd).getNickname(), _server->getClient(fd).getUsername());
-    response = userId + " JOIN " + parsed[1] + "\r\n";
+    // std::string userId = USER_IDENTIFIER(_server->getClient(fd).getNickname(), _server->getClient(fd).getUsername());
+    // response = userId + " JOIN " + parsed[1] + "\r\n";
     send(fd, response.c_str(), response.length(), 0);
     response = RPL_NAMREPLY(userId, _server->getClient(fd).getNickname(), "=", parsed[1], namesList);
     send(fd, response.c_str(), response.length(), 0);
