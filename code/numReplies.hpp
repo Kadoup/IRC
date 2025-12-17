@@ -13,6 +13,8 @@
 # define RPL_CHANNELMODEIS(user_id, nickname, channel, mode) (user_id + " 324 " + nickname + " " + channel + " " + mode + "\r\n")
 # define RPL_UMODEIS(user_id, nickname, mode) (user_id + " 221 " + nickname + " " + mode + "\r\n")
 
+# define ERR_UKNOWNMODE(user_id, nickname, modeChar) (user_id + " 472 " + nickname + " " + modeChar + " :is unknown mode char to me" + "\r\n")
+# define ERR_UMODEUNKNOWNFLAG(user_id, nickname) (user_id + " 501 " + nickname + " :Unknown MODE flag" + "\r\n")
 # define ERR_USERONCHANNEL(user_id, nickname, channel, requested) (user_id + " 443 " + nickname + " " + channel + " " + requested + " :is already on channel" + "\r\n")
 # define ERR_NOTEXTTOSEND(user_id, nickname) (user_id + " 412 " + nickname + " :No text to send" + "\r\n")
 # define ERR_NOTREGISTERED(user_id, nickname) (user_id + " 451 " + nickname + " :You have not registered" + "\r\n")

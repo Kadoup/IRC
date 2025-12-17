@@ -44,44 +44,51 @@ ModeCommand::ModeCommand(server* srv) : Command(srv) {
 
 bool ModeCommand::channelExists(int fd, const std::string& target) {
 	channel* chan = _server->getChannel(target);
+	std::string userId = USER_IDENTIFIER(_server->getClient(fd).getNickname(), _server->getClient(fd).getUsername());
 	if (!chan) {
-		std::cout << "No such channel" << std::endl;
+		std::string response = ERR_NOSUCHCHANNEL(userId, _server->getClient(fd).getNickname(), target);
+		send(fd, response.c_str(), response.length(), 0);
 		return false;
 	}
 	if (!chan->isMember(fd)) {
-		std::cout << "You are not a member of this channel" << std::endl;
+		std::string response = ERR_NOTONCHANNEL(userId, _server->getClient(fd).getNickname(), target);
+		send(fd, response.c_str(), response.length(), 0);
 		return false;
 	}
 	return true;
 }
 
 void ModeCommand::execute(int fd, const std::vector<std::string>& parsed) {
+	std::string userId = USER_IDENTIFIER(_server->getClient(fd).getNickname(), _server->getClient(fd).getUsername());
 	if (parsed.size() != 2 && parsed.size() != 3 && parsed.size() != 4) {
-		std::cout << "Wrong number of arguments" << std::endl;
+		std::string response = ERR_NEEDMOREPARAMS(userId, _server->getClient(fd).getNickname(), "MODE");
+		send(fd, response.c_str(), response.length(), 0);
 		return;
 	}
 	std::string target = parsed[1];
 	if (target.empty()) {
-		std::cout << "No target specified" << std::endl;
+		std::string response = ERR_NEEDMOREPARAMS(userId, _server->getClient(fd).getNickname(), "MODE");
 		return;
 	}
 	if (parsed.size() == 2) {
 		if (target[0] == '#' || target[0] == '&' || target[0] == '+' || target[0] == '!') {
 			if (channelExists(fd, parsed[1])) {
-				std::string _response = ":localhost 324 " + _server->getClient(fd).getNickname() + 
-										" " + parsed[1] + " " + _modes + "\r\n";
-				send(fd, _response.c_str(), _response.length(), 0);
+				std::string response = RPL_CHANNELMODEIS(userId, _server->getClient(fd).getNickname(), target, _modes);
+				send(fd, response.c_str(), response.length(), 0);
 			}
 		}
 		else
-			std::cout << "User modes are not supported" << std::endl;
+		{
+			std::string response = ERR_UMODEUNKNOWNFLAG(userId, _server->getClient(fd).getNickname());
+			send(fd, response.c_str(), response.length(), 0);
+		}
 	}
 	else {
 		if (parsed[2][0] != '+' && parsed[2][0] != '-') {
-			std::cout << "Invalid mode format" << std::endl;
+			std::string response = ERR_UNKNOWNMODE(userId, _server->getClient(fd).getNickname(), parsed[2]);
+			send(fd, response.c_str(), response.length(), 0);
 			return;
 		}
-		std::string userId = USER_IDENTIFIER(_server->getClient(fd).getNickname(), _server->getClient(fd).getUsername());
 		if (target[0] == '#' || target[0] == '&' || target[0] == '+' || target[0] == '!') {
 			if (channelExists(fd, parsed[1])) {
 				channel* chan = _server->getChannel(target);
@@ -89,6 +96,7 @@ void ModeCommand::execute(int fd, const std::vector<std::string>& parsed) {
 					if (parsed[2][1] == 'i') {
 						chan->setInviteOnly(true);
 						std::string response = userId + " MODE " + target + " +i\r\n";
+						send (fd, response.c_str(), response.length(), 0);
 						std::map<int, clients*> members = chan->getMembers();
 						std::map<int, clients*>::iterator memberIt;
 						for (memberIt = members.begin(); memberIt != members.end(); ++memberIt) {
@@ -99,43 +107,47 @@ void ModeCommand::execute(int fd, const std::vector<std::string>& parsed) {
 					else if (parsed[2][1] == 'o') {
 						int targetFd = _server->findClientByNickname(parsed[3]);
 						if (targetFd == -1) {
-							std::cout << "No such user with that nickname" << std::endl;
+							std::string response = ERR_NOSUCHNICK(userId, _server->getClient(fd).getNickname(), parsed[3]);
+							send(fd, response.c_str(), response.length(), 0);
 							return;
 						}
 						if (!chan->isMember(targetFd)) {
-							std::cout << "The specified user is not a member of the channel" << std::endl;
+							std::string response = ERR_USERNOTINCHANNEL(userId, _server->getClient(fd).getNickname(), target, parsed[3]);
+							send (fd, response.c_str(), response.length(), 0);
 							return;
 						}
 						chan->addOperator(targetFd);
-						std::cout << "You are now channel operator for " << target << std::endl;
+						std::string response = userId + " MODE " + target + " +o " + parsed[3] + "\r\n";
+						send (targetFd, response.c_str(), response.length(), 0);
 					}
 					else if (parsed[2][1] == 't') {
-						std::cout << "Topic mode set to true (topic only changed by operators)" << std::endl;
+						std::string response = userId + " MODE " + target + " +t\r\n";
+						send (fd, response.c_str(), response.length(), 0);
 						chan->setReservedTopic(true);
 						// chan->setTopic(chan->getTopic()); // No change, just a placeholder
 					}
 					else if (parsed[2][1] == 'k') {
 						chan->setPasswordProtected(true);
 						chan->setPassword(parsed[3]);
-						std::cout << "Password protection enabled" << std::endl;
+						std::string response = userId + " MODE " + target + " +k " + parsed[3] + "\r\n";
 					}
 					else if (parsed[2][1] == 'l') {
 						chan->setLimitEnabled(true);
 						int limit = std::atoi(parsed[3].c_str());
 						chan->setUserLimit(limit);
-						std::cout << "User limit mode enabled with limit " << limit << std::endl;
+						std::string response = userId + " MODE " + target + " +l " + parsed[3] + "\r\n";
 					}
 					else {
-						std::cout << "Unknown mode to add" << std::endl;
+						std::string response = ERR_UNKNOWNMODE(userId, _server->getClient(fd).getNickname(), parsed[2]);
+						send(fd, response.c_str(), response.length(), 0);
 					}
 				}
 				else if (parsed[2][0] == '-')
 				{
 					if (parsed[2][1] == 'i') {
 						chan->setInviteOnly(false);
-						std::string response = ":" + _server->getClient(fd).getNickname() + "!" +
-											   _server->getClient(fd).getUsername() + "@localhost MODE " +
-											   target + " -i\r\n";
+						std::string response = userId + " MODE " + target + " -i\r\n";
+						send (fd, response.c_str(), response.length(), 0);
 						std::map<int, clients*> members = chan->getMembers();
 						std::map<int, clients*>::iterator memberIt;
 						for (memberIt = members.begin(); memberIt != members.end(); ++memberIt) {
@@ -146,39 +158,46 @@ void ModeCommand::execute(int fd, const std::vector<std::string>& parsed) {
 					else if (parsed[2][1] == 'o') {
 						int targetFd = _server->findClientByNickname(parsed[3]);
 						if (targetFd == -1) {
-							std::cout << "No such user with that nickname" << std::endl;
+							std::string response = ERR_NOSUCHNICK(userId, _server->getClient(fd).getNickname(), parsed[3]);
+							send(fd, response.c_str(), response.length(), 0);
 							return;
 						}
 						if (!chan->isMember(targetFd)) {
-							std::cout << "The specified user is not a member of the channel" << std::endl;
+							std::string response = ERR_USERNOTINCHANNEL(userId, _server->getClient(fd).getNickname(), target, parsed[3]);
+							send (fd, response.c_str(), response.length(), 0);
 							return;
 						}
 						chan->removeOperator(targetFd);
-						std::cout << "You are no longer channel operator for " << target << std::endl;
+						std::string response = userId + " MODE " + target + " -o " + parsed[3] + "\r\n"; 
 					}
 					else if (parsed[2][1] == 't') {
 						channel* chan = _server->getChannel(target);
 						chan->setReservedTopic(false);
-						std::cout << "Topic mode set to false" << std::endl;
+						std::string response = userId + " MODE " + target + " -t\r\n";
+						send (fd, response.c_str(), response.length(), 0);
 						// chan->setTopic(chan->getTopic()); // No change, just a placeholder
 					}
 					else if (parsed[2][1] == 'k') {
 						chan->setPasswordProtected(false);
-						std::cout << "Password protection removed (not implemented)" << std::endl;
+						std::string response = userId + " MODE " + target + " -k\r\n";
+						send (fd, response.c_str(), response.length(), 0);
 						
 					}
 					else if (parsed[2][1] == 'l') {
 						chan->setLimitEnabled(false);
 						chan->setUserLimit(0);
-						std::cout << "User limit mode disabled" << std::endl;
+						std::string response = userId + " MODE " + target + " -l\r\n";
+						send (fd, response.c_str(), response.length(), 0);
 					}
 					else {
-						std::cout << "Unknown mode to remove" << std::endl;
+						std::string response = ERR_UNKNOWNMODE(userId, _server->getClient(fd).getNickname(), parsed[2]);
+						send(fd, response.c_str(), response.length(), 0);
 					}
 				}
 			}
 		} else {
-			std::cout << "User modes are not supported" << std::endl;
+			std::string response = ERR_UMODEUNKNOWNFLAG(userId, _server->getClient(fd).getNickname());
+			send(fd, response.c_str(), response.length(), 0);
 			}
 	}
 }
