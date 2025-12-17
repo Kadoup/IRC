@@ -18,7 +18,8 @@ SRCS = main.cpp \
 	   commands/kickCommand.cpp \
 	   commands/quitCommand.cpp \
 	   commands/modeCommand.cpp \
-	   commands/inviteCommand.cpp
+	   commands/inviteCommand.cpp \
+	   commands/whoCommand.cpp
 OBJS = $(SRCS:%.cpp=$(OBJ_DIR)/%.o)
 RM = rm -f
 

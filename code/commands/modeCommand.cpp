@@ -118,7 +118,12 @@ void ModeCommand::execute(int fd, const std::vector<std::string>& parsed) {
 						}
 						chan->addOperator(targetFd);
 						std::string response = userId + " MODE " + target + " +o " + parsed[3] + "\r\n";
-						send (targetFd, response.c_str(), response.length(), 0);
+						std::map<int, clients*> members = chan->getMembers();
+						for (std::map<int, clients*>::iterator memberIt = members.begin(); memberIt != members.end(); ++memberIt) {
+							int memberFd = memberIt->first;
+							send(memberFd, response.c_str(), response.length(), 0);
+						}
+						// send (targetFd, response.c_str(), response.length(), 0);
 					}
 					else if (parsed[2][1] == 't') {
 						std::string response = userId + " MODE " + target + " +t\r\n";
@@ -170,7 +175,13 @@ void ModeCommand::execute(int fd, const std::vector<std::string>& parsed) {
 							return;
 						}
 						chan->removeOperator(targetFd);
-						std::string response = userId + " MODE " + target + " -o " + parsed[3] + "\r\n"; 
+						std::string response = userId + " MODE " + target + " -o " + parsed[3] + "\r\n";
+						std::map<int, clients*> members = chan->getMembers();
+						for (std::map<int, clients*>::iterator memberIt = members.begin(); memberIt != members.end(); ++memberIt) {
+							int memberFd = memberIt->first;
+							send(memberFd, response.c_str(), response.length(), 0);
+						}
+						// send (targetFd, response.c_str(), response.length(), 0);
 					}
 					else if (parsed[2][1] == 't') {
 						channel* chan = _server->getChannel(target);

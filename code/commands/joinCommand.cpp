@@ -89,7 +89,6 @@ void JoinCommand::execute(int fd, const std::vector<std::string>& parsed) {
         channel newChannel(parsed[1], &_server->getClient(fd));
         channels[parsed[1]] = newChannel;
     }
-    std::string userId = USER_IDENTIFIER(_server->getClient(fd).getNickname(), _server->getClient(fd).getUsername());
     std::string response = userId + " JOIN " + parsed[1] + "\r\n";
     send(fd, response.c_str(), response.length(), 0);
     
@@ -111,7 +110,16 @@ void JoinCommand::execute(int fd, const std::vector<std::string>& parsed) {
     // response = userId + " JOIN " + parsed[1] + "\r\n";
     //send(fd, response.c_str(), response.length(), 0);
     response = RPL_NAMREPLY(userId, _server->getClient(fd).getNickname(), parsed[1], namesList);
-    send(fd, response.c_str(), response.length(), 0);
+    std::map<int, clients*> chanMembers = channels[parsed[1]].getMembers();
+    for (std::map<int, clients*>::iterator it = chanMembers.begin(); it != chanMembers.end(); ++it) {
+        send(it->first, response.c_str(), response.length(), 0);
+    }
+    // send(fd, response.c_str(), response.length(), 0);
     response = RPL_ENDOFNAMES(userId, _server->getClient(fd).getNickname(), parsed[1]);
-    send(fd, response.c_str(), response.length(), 0);
+    std::map<int, clients*> chanMembersEnd = channels[parsed[1]].getMembers();
+    for (std::map<int, clients*>::iterator it = chanMembersEnd.begin(); it
+            != chanMembersEnd.end(); ++it) {
+            send(it->first, response.c_str(), response.length(), 0);
+    }
+    // send(fd, response.c_str(), response.length(), 0);
 }

@@ -53,6 +53,7 @@ void KickCommand::execute(int fd, const std::vector<std::string>& parsed) {
     }
 
     chanIt->second.removeMember(targetFd);
+    chanIt->second.removeOperator(targetFd);
 
     std::string reason = parsed.size() > 3 ? parsed[3] : targetNick;
     std::string response = userId + " KICK " + channelName + " " + targetNick + " :" + reason + "\r\n";

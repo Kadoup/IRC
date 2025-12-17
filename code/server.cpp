@@ -10,6 +10,7 @@
 #include "commands/quitCommand.hpp"
 #include "commands/modeCommand.hpp"
 #include "commands/inviteCommand.hpp"
+#include "commands/whoCommand.hpp"
 
 pollfd    createPoll(int fd)
 {
@@ -156,6 +157,7 @@ void server::registerCommands() {
 	_commands["QUIT"] = new QuitCommand(this);
 	_commands["MODE"] = new ModeCommand(this);
 	_commands["INVITE"] = new InviteCommand(this);
+	_commands["WHO"] = new WhoCommand(this);
 }
 
 void	server::handleCommands(int fd, const std::vector<std::string>& parsed) {

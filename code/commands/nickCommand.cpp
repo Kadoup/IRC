@@ -52,7 +52,6 @@ void NickCommand::execute(int fd, const std::vector<std::string>& parsed) {
         send(fd, response.c_str(), response.length(), 0);
         return;
     }
-    std::string userId = USER_IDENTIFIER(_server->getClient(fd).getNickname(), _server->getClient(fd).getUsername());
     if (!_server->getClient(fd).getNickname().empty()) {
         std::string response = userId + " NICK " + parsed[1] + "\r\n";
         send(fd, response.c_str(), response.length(), 0);

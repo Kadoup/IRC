@@ -27,10 +27,12 @@ void TopicCommand::execute(int fd, const std::vector<std::string>& parsed) {
         send(fd, response.c_str(), response.length(), 0);
     }
     else if (parsed.size() == 3) {
-        if (!it->second.isOperator(fd)) {
-            std::string response = ERR_CHANOPRIVSNEEDED(userId, _server->getClient(fd).getNickname(), channelName);
-            send(fd, response.c_str(), response.length(), 0);
-            return;
+        if (it->second.getReservedTopic() == true) {
+            if (!it->second.isOperator(fd)) {
+                std::string response = ERR_CHANOPRIVSNEEDED(userId, _server->getClient(fd).getNickname(), channelName);
+                send(fd, response.c_str(), response.length(), 0);
+                return;
+            }
         }
         it->second.setTopic(parsed[2]);
         std::string response = userId + " TOPIC " + channelName + " :" + parsed[2] + "\r\n";
