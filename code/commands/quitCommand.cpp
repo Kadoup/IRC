@@ -6,20 +6,18 @@ QuitCommand::QuitCommand(server* srv) : Command(srv) {
 }
 
 void QuitCommand::execute(int fd, const std::vector<std::string>& parsed) {
-    std::string quitMessage;
-    
-    if (parsed.size() > 1) {
-        quitMessage = parsed[1];
-    } else {
-        quitMessage = "Client quit";
+    if (parsed.size() > 2) {
+        std::string userId = USER_IDENTIFIER(_server->getClient(fd).getNickname(), _server->getClient(fd).getUsername());
+        std::string response = ERR_NEEDMOREPARAMS(userId, _server->getClient(fd).getNickname(), "QUIT");
+        send(fd, response.c_str(), response.length(), 0);
+        return;
     }
-    
+    std::string quitMessage = parsed.size() == 2 ? parsed[1] : "Client Quit";
     std::cout << "Client " << fd << " is quitting: " << quitMessage << std::endl;
 
     std::string errorMsg = "ERROR :Closing connection\r\n";
     send(fd, errorMsg.c_str(), errorMsg.length(), 0);
     
-    // Notify channels the user was in
     clients& client = _server->getClient(fd);
     std::string nickname = client.getNickname();
     
@@ -35,6 +33,8 @@ void QuitCommand::execute(int fd, const std::vector<std::string>& parsed) {
             }
         }
     }
+    std::string userId = USER_IDENTIFIER(_server->getClient(fd).getNickname(), _server->getClient(fd).getUsername());
+    std::string response = userId + " QUIT :" + quitMessage + "\r\n";
     _server->removeClient(fd);
     close(fd);
 }

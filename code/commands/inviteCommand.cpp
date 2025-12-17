@@ -6,12 +6,15 @@ InviteCommand::InviteCommand(server* srv) : Command(srv) {
 }
 
 void InviteCommand::execute(int fd, const std::vector<std::string>& parsed) {
+	std::string userId = USER_IDENTIFIER(_server->getClient(fd).getNickname(), _server->getClient(fd).getUsername());
 	if (!_server->getClient(fd).isRegistered()) {
-		std::cout << "You are not registered" << std::endl;
+		std::string response = ERR_NOTREGISTERED(userId, _server->getClient(fd).getNickname());
+		send(fd, response.c_str(), response.length(), 0);
 		return;
 	}
 	if (parsed.size() != 3) {
-		std::cout << "Wrong number of arguments" << std::endl;
+		std::string response = ERR_NEEDMOREPARAMS(userId, _server->getClient(fd).getNickname(), "INVITE");
+		send(fd, response.c_str(), response.length(), 0);
 		return;
 	}
 	std::string channelName = parsed[1];
@@ -20,16 +23,19 @@ void InviteCommand::execute(int fd, const std::vector<std::string>& parsed) {
 	std::map<std::string, channel>::iterator chanIt = channels.find(channelName);
 
 	if (chanIt == channels.end()) {
-		std::cout << "Channel does not exist" << std::endl;
+		std::string response = ERR_NOSUCHCHANNEL(userId, _server->getClient(fd).getNickname(), channelName);
+		send(fd, response.c_str(), response.length(), 0);
 		return;
 	}
 	if (!chanIt->second.isOperator(fd)) {
-		std::cout << "You are not channel operator" << std::endl;
+		std::string response = ERR_CHANOPRIVSNEEDED(userId, _server->getClient(fd).getNickname(), channelName);
+		send(fd, response.c_str(), response.length(), 0);
 		return;
 	}
 	int inviteeFd = _server->findClientByNickname(inviteeNick);
 	if (inviteeFd == -1) {
-		std::cout << "User not found" << std::endl;
+		std::string response = ERR_NOSUCHNICK(userId, _server->getClient(fd).getNickname(), inviteeNick);
+		send(fd, response.c_str(), response.length(), 0);
 		return;
 	}
 	chanIt->second.addInvite(inviteeFd, &_server->getClient(inviteeFd));
