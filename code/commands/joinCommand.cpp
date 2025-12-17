@@ -102,7 +102,6 @@ void JoinCommand::execute(int fd, const std::vector<std::string>& parsed) {
         namesList += memberIt->second->getNickname();
         namesList += " ";
     }
-    std::string userId = USER_IDENTIFIER(_server->getClient(fd).getNickname(), _server->getClient(fd).getUsername());
     response = userId + " JOIN " + parsed[1] + "\r\n";
     send(fd, response.c_str(), response.length(), 0);
     response = RPL_NAMREPLY(userId, _server->getClient(fd).getNickname(), parsed[1], namesList);

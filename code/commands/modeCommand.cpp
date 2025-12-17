@@ -5,42 +5,42 @@ ModeCommand::ModeCommand(server* srv) : Command(srv) {
 	
 }
 
-void ModeCommand::modeAdd()
-{
-	if (parsed[2][1] == 'i') {
-		chan->setInviteOnly(true);
-		std::string response = userId + " MODE " + target + " +i\r\n";
-		std::map<int, clients*> members = chan->getMembers();
-		std::map<int, clients*>::iterator memberIt;
-		for (memberIt = members.begin(); memberIt != members.end(); ++memberIt) {
-			int memberFd = memberIt->first;
-			send(memberFd, response.c_str(), response.length(), 0);
-		}
-	}
-	else if (parsed[2][1] == 'o') {
-		chan->addOperator(fd);
-		std::cout << "You are now channel operator for " << target << std::endl;
-	}
-	else if (parsed[2][1] == 't') {
-		std::cout << "Topic mode set to true (topic only changed by operators)" << std::endl;
-		chan->setReservedTopic(true);
-		// chan->setTopic(chan->getTopic()); // No change, just a placeholder
-	}
-	else if (parsed[2][1] == 'k') {
-		chan->setPasswordProtected(true);
-		chan->setPassword(parsed[3]);
-		std::cout << "Password protection enabled" << std::endl;
-	}
-	else if (parsed[2][1] == 'l') {
-		chan->setLimitEnabled(true);
-		int limit = std::atoi(parsed[3].c_str());
-		chan->setUserLimit(limit);
-		std::cout << "User limit mode enabled with limit " << limit << std::endl;
-	}
-	else {
-		std::cout << "Unknown mode to add" << std::endl;
-					}
-}
+// void ModeCommand::modeAdd()
+// {
+// 	if (parsed[2][1] == 'i') {
+// 		chan->setInviteOnly(true);
+// 		std::string response = userId + " MODE " + target + " +i\r\n";
+// 		std::map<int, clients*> members = chan->getMembers();
+// 		std::map<int, clients*>::iterator memberIt;
+// 		for (memberIt = members.begin(); memberIt != members.end(); ++memberIt) {
+// 			int memberFd = memberIt->first;
+// 			send(memberFd, response.c_str(), response.length(), 0);
+// 		}
+// 	}
+// 	else if (parsed[2][1] == 'o') {
+// 		chan->addOperator(fd);
+// 		std::cout << "You are now channel operator for " << target << std::endl;
+// 	}
+// 	else if (parsed[2][1] == 't') {
+// 		std::cout << "Topic mode set to true (topic only changed by operators)" << std::endl;
+// 		chan->setReservedTopic(true);
+// 		// chan->setTopic(chan->getTopic()); // No change, just a placeholder
+// 	}
+// 	else if (parsed[2][1] == 'k') {
+// 		chan->setPasswordProtected(true);
+// 		chan->setPassword(parsed[3]);
+// 		std::cout << "Password protection enabled" << std::endl;
+// 	}
+// 	else if (parsed[2][1] == 'l') {
+// 		chan->setLimitEnabled(true);
+// 		int limit = std::atoi(parsed[3].c_str());
+// 		chan->setUserLimit(limit);
+// 		std::cout << "User limit mode enabled with limit " << limit << std::endl;
+// 	}
+// 	else {
+// 		std::cout << "Unknown mode to add" << std::endl;
+// 					}
+// }
 
 bool ModeCommand::channelExists(int fd, const std::string& target) {
 	channel* chan = _server->getChannel(target);
@@ -97,7 +97,16 @@ void ModeCommand::execute(int fd, const std::vector<std::string>& parsed) {
 						}
 					}
 					else if (parsed[2][1] == 'o') {
-						chan->addOperator(fd);
+						int targetFd = _server->findClientByNickname(parsed[3]);
+						if (targetFd == -1) {
+							std::cout << "No such user with that nickname" << std::endl;
+							return;
+						}
+						if (!chan->isMember(targetFd)) {
+							std::cout << "The specified user is not a member of the channel" << std::endl;
+							return;
+						}
+						chan->addOperator(targetFd);
 						std::cout << "You are now channel operator for " << target << std::endl;
 					}
 					else if (parsed[2][1] == 't') {
@@ -135,13 +144,22 @@ void ModeCommand::execute(int fd, const std::vector<std::string>& parsed) {
 						}
 					}
 					else if (parsed[2][1] == 'o') {
-						chan->removeOperator(fd);
+						int targetFd = _server->findClientByNickname(parsed[3]);
+						if (targetFd == -1) {
+							std::cout << "No such user with that nickname" << std::endl;
+							return;
+						}
+						if (!chan->isMember(targetFd)) {
+							std::cout << "The specified user is not a member of the channel" << std::endl;
+							return;
+						}
+						chan->removeOperator(targetFd);
 						std::cout << "You are no longer channel operator for " << target << std::endl;
 					}
 					else if (parsed[2][1] == 't') {
-						std::cout << "Topic mode set to true (topic only changed by operators)" << std::endl;
 						channel* chan = _server->getChannel(target);
 						chan->setReservedTopic(false);
+						std::cout << "Topic mode set to false" << std::endl;
 						// chan->setTopic(chan->getTopic()); // No change, just a placeholder
 					}
 					else if (parsed[2][1] == 'k') {

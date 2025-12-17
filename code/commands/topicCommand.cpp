@@ -21,7 +21,7 @@ void TopicCommand::execute(int fd, const std::vector<std::string>& parsed) {
         std::string response = RPL_TOPIC(userId, _server->getClient(fd).getNickname(), channelName, topic);
         send(fd, response.c_str(), response.length(), 0);
     } else if (parsed.size() == 3) {
-        if (!it->second.getReservedTopic() == true)
+        if (it->second.getReservedTopic() == true)
         {
             if (!it->second.isOperator(fd)) {
                 std::cout << "You are not channel operator" << std::endl;

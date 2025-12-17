@@ -68,6 +68,8 @@ std::vector<std::string> parseCommand(std::string buffer)
 		command = buffer.substr(0, pos);
 		params = buffer.substr(pos + 1);
 	}
+	else
+		command = buffer;
 	std::transform(command.begin(), command.end(), command.begin(), ::toupper);
 	parsed.push_back(command);
 	pos = params.find(':');
@@ -75,9 +77,8 @@ std::vector<std::string> parseCommand(std::string buffer)
 		trail = params.substr(pos + 1);
 		middle = params.substr(0, pos);
 	}
-	else {
+	else
 		middle = params;
-	}
 	std::stringstream ss(middle);
 	std::string arg;
 	while (ss >> arg) {
@@ -232,9 +233,9 @@ void server::handleClientMessage(size_t& i)
 	} 
 	buffer[n] = '\0';
 	
-	
-	_clients[_fds[i].fd].setBuffer(std::string(buffer));
-	std::string msg = _clients[_fds[i].fd].getBuffer();
+	int currentFd = _fds[i].fd;
+	_clients[currentFd].setBuffer(std::string(buffer));
+	std::string msg = _clients[currentFd].getBuffer();
 	size_t pos = msg.find("\r\n");
 	std::cout << "pos: " << pos << std::endl;
 	if (pos == std::string::npos) {
@@ -245,12 +246,17 @@ void server::handleClientMessage(size_t& i)
 		std::string fullMess = msg.substr(0, pos);
 		std::vector<std::string> command = parseCommand(fullMess);
 		printParsed(command);
-		handleCommands(_fds[i].fd, command);
-		_clients[_fds[i].fd].clearBuffer(pos);
-		msg = _clients[_fds[i].fd].getBuffer();
+		handleCommands(currentFd, command);
+		if (command[0] == "QUIT") {
+            // Client was removed, decrement i to adjust for removed fd
+            i--;
+			return;
+        }
+		_clients[currentFd].clearBuffer(pos);
+		msg = _clients[currentFd].getBuffer();
 		pos = msg.find("\r\n");
 	}
-	std::cout << _clients[_fds[i].fd] << std::endl;
+	std::cout << _clients[currentFd] << std::endl;
 	// std::stringstream ss;
 	// ss << _fds[i].fd;
 	// std::string clientName = "Client " + ss.str() + ": ";

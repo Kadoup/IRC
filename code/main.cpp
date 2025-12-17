@@ -2,9 +2,8 @@
 
 void checkPort(char **argv)
 {
-    errno = 0;
     long port = std::strtol(argv[1], NULL, 10);
-    if (errno == ERANGE || port < 1024 || port > 65535)
+    if (port < 1024 || port > 65535)
     {
         std::cerr << "Port number must be between 1 and 65535" << std::endl;
         exit(EXIT_FAILURE);
