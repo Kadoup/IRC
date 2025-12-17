@@ -130,12 +130,14 @@ void ModeCommand::execute(int fd, const std::vector<std::string>& parsed) {
 						chan->setPasswordProtected(true);
 						chan->setPassword(parsed[3]);
 						std::string response = userId + " MODE " + target + " +k " + parsed[3] + "\r\n";
+						send (fd, response.c_str(), response.length(), 0);
 					}
 					else if (parsed[2][1] == 'l') {
 						chan->setLimitEnabled(true);
 						int limit = std::atoi(parsed[3].c_str());
 						chan->setUserLimit(limit);
 						std::string response = userId + " MODE " + target + " +l " + parsed[3] + "\r\n";
+						send (fd, response.c_str(), response.length(), 0);
 					}
 					else {
 						std::string response = ERR_UNKNOWNMODE(userId, _server->getClient(fd).getNickname(), parsed[2]);
