@@ -39,12 +39,8 @@ void InviteCommand::execute(int fd, const std::vector<std::string>& parsed) {
 		return;
 	}
 	chanIt->second.addInvite(inviteeFd, &_server->getClient(inviteeFd));
-	std::string response = ":" + _server->getClient(fd).getNickname() + "!" +
-						   _server->getClient(fd).getUsername() + "@localhost INVITE " +
-						   inviteeNick + " :" + channelName + "\r\n";
+	std::string response = userId + " INVITE " + inviteeNick + " " + channelName + "\r\n";
 	send(inviteeFd, response.c_str(), response.length(), 0);
-	std::string reply = ":" + _server->_getServerName() + " 341 " + 
-						_server->getClient(fd).getNickname() + " " +
-						inviteeNick + " " + channelName + "\r\n";
+	std::string reply = RPL_INVITING(userId, _server->getClient(fd).getNickname(), channelName, inviteeNick);
 	send(fd, reply.c_str(), reply.length(), 0);
 }

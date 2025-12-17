@@ -6,10 +6,10 @@ JoinCommand::JoinCommand(server* srv) : Command(srv) {
 }
 
 bool JoinCommand::isInvited(int fd, channel& chan) {
+    std ::string userId = USER_IDENTIFIER(_server->getClient(fd).getNickname(), _server->getClient(fd).getUsername());
     std::map<int, clients*> invited = chan.getInvited();
     if (invited.find(fd) == invited.end()) {
-        std::string response = ":localhost 473 " + _server->getClient(fd).getNickname() +
-                            " " + chan.getName() + " :Cannot join channel (+i)\r\n";
+        std::string response = ERR_INVITEONLYCHAN(userId, _server->getClient(fd).getNickname(), chan.getName());
         send(fd, response.c_str(), response.length(), 0);
         return false;
     }
@@ -67,15 +67,13 @@ void JoinCommand::execute(int fd, const std::vector<std::string>& parsed) {
         }
         if (chan.limitReached())
         {
-            std::string response = ":localhost 471 " + _server->getClient(fd).getNickname() +
-                                " " + chan.getName() + " :Cannot join channel (+l)\r\n";
+            std::string response = ERR_CHANNELISFULL(userId, _server->getClient(fd).getNickname(), parsed[1]);
             send(fd, response.c_str(), response.length(), 0);
             return;
         }
         if (chan.getPasswordProtected()) {
             if (parsed.size() < 3 || parsed[2] != chan.getPassword()) {
-                std::string response = ":localhost 475 " + _server->getClient(fd).getNickname() +
-                                    " " + chan.getName() + " :Cannot join channel (+k)\r\n";
+                std::string response = ERR_BADCHANNELKEY(userId, _server->getClient(fd).getNickname(), parsed[1]);
                 send(fd, response.c_str(), response.length(), 0);
                 return;
             }
@@ -111,7 +109,7 @@ void JoinCommand::execute(int fd, const std::vector<std::string>& parsed) {
     }
     // std::string userId = USER_IDENTIFIER(_server->getClient(fd).getNickname(), _server->getClient(fd).getUsername());
     // response = userId + " JOIN " + parsed[1] + "\r\n";
-    send(fd, response.c_str(), response.length(), 0);
+    //send(fd, response.c_str(), response.length(), 0);
     response = RPL_NAMREPLY(userId, _server->getClient(fd).getNickname(), parsed[1], namesList);
     send(fd, response.c_str(), response.length(), 0);
     response = RPL_ENDOFNAMES(userId, _server->getClient(fd).getNickname(), parsed[1]);
