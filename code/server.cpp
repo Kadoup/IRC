@@ -228,14 +228,15 @@ void server::handleClientMessage(size_t& i)
 {
 	char buffer[1024];
 	int n = recv(_fds[i].fd, buffer, sizeof(buffer) - 1, 0);
+	int currentFd = _fds[i].fd;
 	if (n <= 0)
 	{
+		_clients.erase(currentFd);
 		disconnectClient(_fds, i);
 		return;
 	} 
 	buffer[n] = '\0';
 	
-	int currentFd = _fds[i].fd;
 	_clients[currentFd].setBuffer(std::string(buffer));
 	std::string msg = _clients[currentFd].getBuffer();
 	size_t pos = msg.find("\r\n");
