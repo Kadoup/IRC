@@ -3,12 +3,12 @@
 #include "../clients.hpp"
 #include <sys/socket.h>
 
-CapCommand::CapCommand(server* srv) : command(srv) {
+CapCommand::CapCommand(server* srv) : Command(srv) {
     
 }
 
 void CapCommand::execute(int fd, const std::vector<std::string>& parsed) {
-    clients& client = _server->getClient(fd);
+    // clients& client = _server->getClient(fd);
     
     if (parsed.size() >= 2 && parsed[1] == "LS") {
         std::string response = ":" + _server->_getServerName() + " CAP * LS :\r\n";
