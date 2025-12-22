@@ -17,8 +17,8 @@ void InviteCommand::execute(int fd, const std::vector<std::string>& parsed) {
 		send(fd, response.c_str(), response.length(), 0);
 		return;
 	}
-	std::string channelName = parsed[1];
-	std::string inviteeNick = parsed[2];
+	std::string channelName = parsed[2];
+	std::string inviteeNick = parsed[1];
 	std::map<std::string, channel>& channels = _server->getChannels();
 	std::map<std::string, channel>::iterator chanIt = channels.find(channelName);
 

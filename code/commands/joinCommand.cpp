@@ -62,7 +62,7 @@ void JoinCommand::execute(int fd, const std::vector<std::string>& parsed) {
         }
         if (chan.getInviteOnly() && !isInvited(fd, chan)) {
             std::string response = ERR_INVITEONLYCHAN(userId, _server->getClient(fd).getNickname(), parsed[1]);
-            send(fd, response.c_str(), response.length(), 0);
+            // send(fd, response.c_str(), response.length(), 0);
             return;
         }
         if (chan.limitReached())

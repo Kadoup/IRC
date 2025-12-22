@@ -92,11 +92,16 @@ void ModeCommand::execute(int fd, const std::vector<std::string>& parsed) {
 		if (target[0] == '#' || target[0] == '&' || target[0] == '+' || target[0] == '!') {
 			if (channelExists(fd, parsed[1])) {
 				channel* chan = _server->getChannel(target);
+				if (chan->isOperator(fd) == false) {
+					std::string response = ERR_CHANOPRIVSNEEDED(userId, _server->getClient(fd).getNickname(), target);
+					send(fd, response.c_str(), response.length(), 0);
+					return;
+				}
 				if (parsed[2][0] == '+') {
 					if (parsed[2][1] == 'i') {
 						chan->setInviteOnly(true);
 						std::string response = userId + " MODE " + target + " +i\r\n";
-						send (fd, response.c_str(), response.length(), 0);
+						// send (fd, response.c_str(), response.length(), 0);
 						std::map<int, clients*> members = chan->getMembers();
 						std::map<int, clients*>::iterator memberIt;
 						for (memberIt = members.begin(); memberIt != members.end(); ++memberIt) {

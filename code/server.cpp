@@ -169,7 +169,10 @@ void	server::handleCommands(int fd, const std::vector<std::string>& parsed) {
 	if (it != _commands.end()) {
 		it->second->execute(fd, parsed);
 	} else {
-		std::cout << "Wrong command" << std::endl;
+		std::string userId = USER_IDENTIFIER(_clients[fd].getNickname(), _clients[fd].getUsername());
+        std::string response = ERR_UNKNOWNCOMMAND(userId, _clients[fd].getNickname(), command);
+        send(fd, response.c_str(), response.length(), 0);
+        std::cout << "Unknown command: " << command << std::endl;
 	}
 }
 

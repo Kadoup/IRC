@@ -36,3 +36,4 @@
 # define ERR_BADCHANMASK(user_id, nickname, channel) (user_id + " 476 " + nickname + " " + channel + " :Incorrect format" + "\r\n")
 # define ERR_BADCHANNELKEY(user_id, nickname, channel) (user_id + " 475 " + nickname + " " + channel + " :Cannot join channel (+k)" + "\r\n")
 # define ERR_CHANOPRIVSNEEDED(user_id, nickname, channel) (user_id + " 482 " + nickname + " " + channel + " :You're not channel operator" + "\r\n")
+#define ERR_UNKNOWNCOMMAND(source, nick, command) (source + " 421 " + nick + " " + command + " :Unknown command\r\n")
