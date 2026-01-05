@@ -170,9 +170,9 @@ void	server::handleCommands(int fd, const std::vector<std::string>& parsed) {
 		it->second->execute(fd, parsed);
 	} else {
 		std::string userId = USER_IDENTIFIER(_clients[fd].getNickname(), _clients[fd].getUsername());
-        std::string response = ERR_UNKNOWNCOMMAND(userId, _clients[fd].getNickname(), command);
-        send(fd, response.c_str(), response.length(), 0);
-        std::cout << "Unknown command: " << command << std::endl;
+		std::string response = ERR_UNKNOWNCOMMAND(userId, _clients[fd].getNickname(), command);
+		send(fd, response.c_str(), response.length(), 0);
+		std::cout << "Unknown command: " << command << std::endl;
 	}
 }
 
@@ -236,6 +236,36 @@ void server::handleClientMessage(size_t& i)
 	int currentFd = _fds[i].fd;
 	if (n <= 0)
 	{
+		for (std::map<std::string, channel>::iterator chanIt = _channels.begin(); 
+			 chanIt != _channels.end(); ++chanIt) {
+			if (chanIt->second.isMember(currentFd)) {
+				bool wasOperator = chanIt->second.isOperator(currentFd);
+				chanIt->second.removeMember(currentFd);
+				chanIt->second.removeOperator(currentFd);
+				if (wasOperator && !chanIt->second.getMembers().empty() && 
+                    chanIt->second.getOperators().empty()) {
+                    std::map<int, clients*> members = chanIt->second.getMembers();
+                    std::map<int, clients*>::iterator firstMember = members.begin();
+                    chanIt->second.addOperator(firstMember->first);
+                    std::string userId = USER_IDENTIFIER(firstMember->second->getNickname(), 
+                                                          firstMember->second->getUsername());
+                    std::string modeMsg = userId + " MODE " + chanIt->first + " +o " + 
+                                          firstMember->second->getNickname() + "\r\n";
+                    for (std::map<int, clients*>::iterator memberIt = members.begin(); 
+                         memberIt != members.end(); ++memberIt) {
+                        send(memberIt->first, modeMsg.c_str(), modeMsg.length(), 0);
+                    }
+                }
+				std::string userId = USER_IDENTIFIER(_clients[currentFd].getNickname(), _clients[currentFd].getUsername());
+				std::string response = userId + " QUIT :Client disconnected\r\n";
+				std::map<int, clients*> members = chanIt->second.getMembers();
+				for (std::map<int, clients*>::iterator memberIt = members.begin(); 
+					 memberIt != members.end(); ++memberIt) {
+					int memberFd = memberIt->first;
+					send(memberFd, response.c_str(), response.length(), 0);
+				}
+			}
+		}
 		_clients.erase(currentFd);
 		disconnectClient(_fds, i);
 		return;
@@ -256,10 +286,10 @@ void server::handleClientMessage(size_t& i)
 		printParsed(command);
 		handleCommands(currentFd, command);
 		if (command[0] == "QUIT") {
-            // Client was removed, decrement i to adjust for removed fd
-            i--;
+			// Client was removed, decrement i to adjust for removed fd
+			i--;
 			return;
-        }
+		}
 		_clients[currentFd].clearBuffer(pos);
 		msg = _clients[currentFd].getBuffer();
 		pos = msg.find("\r\n");

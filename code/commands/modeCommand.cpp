@@ -110,6 +110,11 @@ void ModeCommand::execute(int fd, const std::vector<std::string>& parsed) {
 						}
 					}
 					else if (parsed[2][1] == 'o') {
+						if (parsed.size() < 4) {
+                            std::string response = ERR_NEEDMOREPARAMS(userId, _server->getClient(fd).getNickname(), "MODE");
+                            send(fd, response.c_str(), response.length(), 0);
+                            return;
+                        }
 						int targetFd = _server->findClientByNickname(parsed[3]);
 						if (targetFd == -1) {
 							std::string response = ERR_NOSUCHNICK(userId, _server->getClient(fd).getNickname(), parsed[3]);
@@ -137,12 +142,22 @@ void ModeCommand::execute(int fd, const std::vector<std::string>& parsed) {
 						// chan->setTopic(chan->getTopic()); // No change, just a placeholder
 					}
 					else if (parsed[2][1] == 'k') {
+						if (parsed.size() < 4) {
+                        std::string response = ERR_NEEDMOREPARAMS(userId, _server->getClient(fd).getNickname(), "MODE");
+                        send(fd, response.c_str(), response.length(), 0);
+                        return;
+						}
 						chan->setPasswordProtected(true);
 						chan->setPassword(parsed[3]);
 						std::string response = userId + " MODE " + target + " +k " + parsed[3] + "\r\n";
 						send (fd, response.c_str(), response.length(), 0);
 					}
 					else if (parsed[2][1] == 'l') {
+						if (parsed.size() < 4) {
+							std::string response = ERR_NEEDMOREPARAMS(userId, _server->getClient(fd).getNickname(), "MODE");
+							send(fd, response.c_str(), response.length(), 0);
+							return;
+						}
 						chan->setLimitEnabled(true);
 						int limit = std::atoi(parsed[3].c_str());
 						chan->setUserLimit(limit);
@@ -168,6 +183,11 @@ void ModeCommand::execute(int fd, const std::vector<std::string>& parsed) {
 						}
 					}
 					else if (parsed[2][1] == 'o') {
+						if (parsed.size() < 4) {
+                            std::string response = ERR_NEEDMOREPARAMS(userId, _server->getClient(fd).getNickname(), "MODE");
+                            send(fd, response.c_str(), response.length(), 0);
+                            return;
+                        }
 						int targetFd = _server->findClientByNickname(parsed[3]);
 						if (targetFd == -1) {
 							std::string response = ERR_NOSUCHNICK(userId, _server->getClient(fd).getNickname(), parsed[3]);

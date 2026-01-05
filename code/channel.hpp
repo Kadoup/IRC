@@ -35,6 +35,7 @@ private:
     std::string getPassword() const;
     std::map<int, clients*> getMembers() const;
     std::map<int, clients*> getInvited() const;
+    std::set<int> getOperators() const;
     bool getLimitEnabled() const;
     int getUserLimit() const;
     bool getReservedTopic() const;

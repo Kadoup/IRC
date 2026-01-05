@@ -148,6 +148,11 @@ std::map<int, clients *> channel::getInvited() const
     return _invited;
 }
 
+std::set<int> channel::getOperators() const
+{
+    return _operators;
+}
+
 bool channel::getLimitEnabled() const
 {
     return _limitEnabled;
