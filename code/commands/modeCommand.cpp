@@ -98,6 +98,11 @@ void ModeCommand::execute(int fd, const std::vector<std::string>& parsed) {
 					return;
 				}
 				if (parsed[2][0] == '+') {
+					if (parsed[2].length() < 2) {
+						std::string response = ERR_UNKNOWNMODE(userId, _server->getClient(fd).getNickname(), parsed[2]);
+						send(fd, response.c_str(), response.length(), 0);
+						return;
+					}
 					if (parsed[2][1] == 'i') {
 						chan->setInviteOnly(true);
 						std::string response = userId + " MODE " + target + " +i\r\n";
@@ -171,10 +176,15 @@ void ModeCommand::execute(int fd, const std::vector<std::string>& parsed) {
 				}
 				else if (parsed[2][0] == '-')
 				{
+					if (parsed[2].length() < 2) {
+						std::string response = ERR_UNKNOWNMODE(userId, _server->getClient(fd).getNickname(), parsed[2]);
+						send(fd, response.c_str(), response.length(), 0);
+						return;
+					}
 					if (parsed[2][1] == 'i') {
 						chan->setInviteOnly(false);
 						std::string response = userId + " MODE " + target + " -i\r\n";
-						send (fd, response.c_str(), response.length(), 0);
+						// send (fd, response.c_str(), response.length(), 0);
 						std::map<int, clients*> members = chan->getMembers();
 						std::map<int, clients*>::iterator memberIt;
 						for (memberIt = members.begin(); memberIt != members.end(); ++memberIt) {
