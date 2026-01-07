@@ -225,6 +225,7 @@ std::vector<int> server::findTarget(std::string target, int senderFd)
 		}
 		if (!found)
 			targetFds.push_back(-1);
+		targetFds.push_back(-2); // Separator for multiple targets
 	}
 	return targetFds;
 }
