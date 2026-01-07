@@ -18,6 +18,7 @@ pollfd    createPoll(int fd)
 	pollfd newPollFd;
 	newPollFd.fd = fd;
 	newPollFd.events = POLLIN;
+	newPollFd.revents = 0;
 	return newPollFd;
 }
 
@@ -225,7 +226,7 @@ std::vector<int> server::findTarget(std::string target, int senderFd)
 		}
 		if (!found)
 			targetFds.push_back(-1);
-		targetFds.push_back(-2); // Separator for multiple targets
+		targetFds.push_back(-2);
 	}
 	return targetFds;
 }
@@ -344,6 +345,7 @@ void server::initServer()
 	pollfd serverPollFd;
 	serverPollFd.fd = _serverfd;
 	serverPollFd.events = POLLIN;
+	serverPollFd.revents = 0;
 	_fds.push_back(serverPollFd);
 }
 

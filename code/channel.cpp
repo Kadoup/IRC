@@ -43,8 +43,19 @@ bool channel::isOperator(int clientFd) const
 }
 
 channel::channel(const channel &other)
+    : _members(other._members),
+      _operators(other._operators),
+      _name(other._name),
+      _creator(other._creator),
+      _reservedTopic(other._reservedTopic),
+      _topic(other._topic),
+      _inviteOnly(other._inviteOnly),
+      _passwordProtected(other._passwordProtected),
+      _password(other._password),
+      _limitEnabled(other._limitEnabled),
+      _userLimit(other._userLimit),
+      _invited(other._invited)
 {
-	*this = other;
 }
 
 channel &channel::operator=(const channel &other)
@@ -179,6 +190,14 @@ bool channel::getPasswordProtected() const
 }
 
 channel::channel()
+    : _creator(NULL),
+      _reservedTopic(false),
+      _topic("No topic is set"),
+      _inviteOnly(false),
+      _passwordProtected(false),
+      _password(""),
+      _limitEnabled(false),
+      _userLimit(0)
 {
 }
 
