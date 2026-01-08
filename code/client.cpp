@@ -7,19 +7,104 @@
 #include <unistd.h>
 #include <poll.h>
 #include <cstdlib>
+#include <sstream>
+#include <algorithm>
+#include <vector>
 
 #define BUFFER_SIZE 512
 
 class IRCClient {
 private:
+    std::string password;
     int sockfd;
     std::string serverIP;
     int serverPort;
     bool connected;
+    std::string botNickname;
+
+
+    void registerBot() {
+        if (!password.empty()) {
+            sendMessage("PASS " + password);
+        }
+        sendMessage("NICK " + botNickname);
+        sendMessage("USER " + botNickname + " 0 * :Help Bot");
+    }
+    void parseServerMessage(const std::string& message) {
+        size_t privmsgPos = message.find("PRIVMSG");
+        if (privmsgPos == std::string::npos) return;
+        
+        std::istringstream iss(message);
+        std::string token, sender, target, content;
+        
+        // Parse prefix if exists
+        if (message[0] == ':') {
+            iss >> token; // :nick!user@host
+            size_t nickEnd = token.find('!');
+            if (nickEnd != std::string::npos) {
+                sender = token.substr(1, nickEnd - 1);
+            }
+        }
+        
+        iss >> token; // PRIVMSG
+        iss >> target; // target (channel or nickname)
+        
+        // Get the rest as message content
+        if (iss.peek() == ' ') iss.ignore();
+        
+        // Check if next part starts with :
+        if (iss.peek() == ':') {
+            iss.ignore(); // skip the :
+            std::getline(iss, content); // rest of line
+        } else {
+            iss >> content; // single word without :
+        }
+        
+        // Convert to lowercase for case-insensitive comparison
+        std::string lowerContent = content;
+        std::transform(lowerContent.begin(), lowerContent.end(), 
+                     lowerContent.begin(), ::tolower);
+        
+        if (lowerContent.find("help") != std::string::npos) {
+            // Determine where to reply
+            std::string replyTarget;
+            if (!target.empty() && (target[0] == '#' || target[0] == '&')) {
+                replyTarget = target; // reply to channel
+            } else if (!sender.empty()) {
+                replyTarget = sender; // reply to sender
+            } else {
+                return; // no valid reply target
+            }
+            
+            sendHelpMessage(replyTarget);
+        }
+    }
+
+    void sendHelpMessage(const std::string& target) {
+        std::vector<std::string> commands = {
+            "Available IRC commands:",
+            "NICK <nickname> - Change your nickname",
+            "USER <username> <mode> <unused> <realname> - Set user information",
+            "JOIN <channel> - Join a channel",
+            "PART <channel> [message] - Leave a channel",
+            "PRIVMSG <target> <message> - Send a message",
+            "QUIT [message] - Disconnect from server",
+            "TOPIC <channel> [topic] - View or set channel topic",
+            "MODE <target> <modes> - Change channel/user modes",
+            "KICK <channel> <user> [reason] - Kick a user",
+            "INVITE <nickname> <channel> - Invite user to channel",
+            "WHO <mask> - Get information about users",
+            "WHOIS <nickname> - Get detailed user information"
+        };
+        
+        for (const auto& cmd : commands) {
+            sendMessage("PRIVMSG " + target + " :" + cmd);
+        }
+    }
 
 public:
-    IRCClient(const std::string& ip, int port) 
-        : sockfd(-1), serverIP(ip), serverPort(port), connected(false) {}
+    IRCClient(const std::string& ip, int port, const std::string& pass) 
+        : sockfd(-1), serverIP(ip), serverPort(port), connected(false), password(pass), botNickname("boop") {}
 
     ~IRCClient() {
         disconnect();
@@ -48,6 +133,8 @@ public:
 
         connected = true;
         std::cout << "Connected to " << serverIP << ":" << serverPort << std::endl;
+        registerBot();
+
         return true;
     }
 
@@ -63,7 +150,10 @@ public:
     bool sendMessage(const std::string& message) {
         if (!connected) return false;
         
-        std::string msg = message + "\r\n";
+        std::string msg = message;
+        if (msg.find("\r\n") == std::string::npos) {
+            msg += "\r\n";
+        }
         ssize_t sent = send(sockfd, msg.c_str(), msg.length(), 0);
         
         if (sent < 0) {
@@ -115,23 +205,28 @@ public:
                     break;
                 }
                 
-                std::cout << buffer;
+                std::string serverMsg(buffer);
+                std::cout << serverMsg;
                 std::cout.flush();
+                
+                // Parse for help commands
+                parseServerMessage(serverMsg);
             }
         }
     }
 };
 
 int main(int argc, char* argv[]) {
-    if (argc != 3) {
-        std::cerr << "Usage: " << argv[0] << " <server_ip> <port>" << std::endl;
+    if (argc != 4) {
+        std::cerr << "Usage: " << argv[0] << " <server_ip> <port> <password>" << std::endl;
         return 1;
     }
 
     std::string serverIP = argv[1];
     int port = std::atoi(argv[2]);
+    std::string password = argv[3];
 
-    IRCClient client(serverIP, port);
+    IRCClient client(serverIP, port, password);
     
     if (!client.connectToServer()) {
         return 1;
