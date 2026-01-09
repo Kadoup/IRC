@@ -37,9 +37,16 @@ void    server::connectClient()
 	}
 }
 
-void disconnectClient(std::vector<pollfd>& fds, size_t& i)
+void server::disconnectClient(std::vector<pollfd>& fds, size_t& i)
 {
 	std::cout << "Client disconnected: " << fds[i].fd << std::endl;
+	for (std::map<std::string, channel>::iterator chanIt = _channels.begin(); chanIt != _channels.end(); ++chanIt) {
+			if (chanIt->second.isMember(fds[i].fd)) {
+				if (chanIt->second.getMembers().empty()) {
+        			_channels.erase(chanIt);
+    			}
+			}
+	}
 	close(fds[i].fd);
 	fds.erase(fds.begin() + i);
 	i--;

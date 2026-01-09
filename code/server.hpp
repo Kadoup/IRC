@@ -48,6 +48,7 @@ public:
     std::map<int, clients>& getClients();
     std::map<std::string, channel>& getChannels();
     void removeClient(int fd);
+    void disconnectClient(std::vector<pollfd>& fds, size_t& i);
     
     server(int port, std::string password);
     ~server();
