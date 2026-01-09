@@ -40,13 +40,6 @@ void    server::connectClient()
 void server::disconnectClient(std::vector<pollfd>& fds, size_t& i)
 {
 	std::cout << "Client disconnected: " << fds[i].fd << std::endl;
-	for (std::map<std::string, channel>::iterator chanIt = _channels.begin(); chanIt != _channels.end(); ++chanIt) {
-			if (chanIt->second.isMember(fds[i].fd)) {
-				if (chanIt->second.getMembers().empty()) {
-        			_channels.erase(chanIt);
-    			}
-			}
-	}
 	close(fds[i].fd);
 	fds.erase(fds.begin() + i);
 	i--;
@@ -246,11 +239,15 @@ void server::handleClientMessage(size_t& i)
 	if (n <= 0)
 	{
 		for (std::map<std::string, channel>::iterator chanIt = _channels.begin(); 
-			 chanIt != _channels.end(); ++chanIt) {
+			 chanIt != _channels.end();) {
 			if (chanIt->second.isMember(currentFd)) {
 				bool wasOperator = chanIt->second.isOperator(currentFd);
 				chanIt->second.removeMember(currentFd);
 				chanIt->second.removeOperator(currentFd);
+				if (chanIt->second.getMembers().empty()) {
+        			_channels.erase(chanIt++);
+					continue;
+    			}
 				if (wasOperator && !chanIt->second.getMembers().empty() && 
                     chanIt->second.getOperators().empty()) {
                     std::map<int, clients*> members = chanIt->second.getMembers();
@@ -274,6 +271,7 @@ void server::handleClientMessage(size_t& i)
 					send(memberFd, response.c_str(), response.length(), 0);
 				}
 			}
+			++chanIt;
 		}
 		_clients.erase(currentFd);
 		disconnectClient(_fds, i);
