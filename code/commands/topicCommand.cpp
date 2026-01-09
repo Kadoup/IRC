@@ -6,18 +6,19 @@ TopicCommand::TopicCommand(server* srv) : Command(srv) {
 }
 
 void TopicCommand::execute(int fd, const std::vector<std::string>& parsed) {
-    std::string channelName = parsed[1];
-    std::map<std::string, channel>& channels = _server->getChannels();
-    std::map<std::string, channel>::iterator it = channels.find(channelName);
     std::string userId = USER_IDENTIFIER(_server->getClient(fd).getNickname(), _server->getClient(fd).getUsername());
-
-    if (it == channels.end()) {
-        std::string response = ERR_NOSUCHCHANNEL(userId, _server->getClient(fd).getNickname(), channelName);
+    
+    if (parsed.size() < 2) {
+        std::string response = ERR_NEEDMOREPARAMS(userId, _server->getClient(fd).getNickname(), "TOPIC");
         send(fd, response.c_str(), response.length(), 0);
         return;
     }
-    if (parsed.size() < 2) {
-        std::string response = ERR_NEEDMOREPARAMS(userId, _server->getClient(fd).getNickname(), "TOPIC");
+
+    std::string channelName = parsed[1];
+    std::map<std::string, channel>& channels = _server->getChannels();
+    std::map<std::string, channel>::iterator it = channels.find(channelName);
+    if (it == channels.end()) {
+        std::string response = ERR_NOSUCHCHANNEL(userId, _server->getClient(fd).getNickname(), channelName);
         send(fd, response.c_str(), response.length(), 0);
         return;
     }

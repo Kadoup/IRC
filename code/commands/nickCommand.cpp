@@ -41,11 +41,6 @@ void NickCommand::execute(int fd, const std::vector<std::string>& parsed) {
             return;
         }
     }
-    if (_server->getClient(fd).isRegistered()) {
-        std::string response = ERR_NICKNAMEINUSE(userId, _server->getClient(fd).getNickname(), parsed[1]);
-        send(fd, response.c_str(), response.length(), 0);
-        return;
-    }
     
     if (!_server->isUniqueNickname(parsed[1])) {
         std::string response = ERR_NICKNAMEINUSE(userId, _server->getClient(fd).getNickname(), parsed[1]);
