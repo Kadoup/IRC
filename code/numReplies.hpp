@@ -38,3 +38,4 @@
 # define ERR_CHANOPRIVSNEEDED(user_id, nickname, channel) (user_id + " 482 " + nickname + " " + channel + " :You're not channel operator" + "\r\n")
 #define ERR_UNKNOWNCOMMAND(source, nick, command) (source + " 421 " + nick + " " + command + " :Unknown command\r\n")
 # define ERR_CANNOTSENDTOCHAN(user_id, nickname, channel) (user_id + " 404 " + nickname + " " + channel + " :Cannot send to channel" + "\r\n")
+# define ERR_INVALIDMODEPARAM(user_id, nickname, modeChar) (user_id + " 696 " + nickname + " " + modeChar + " :is not a valid mode parameter" + "\r\n")

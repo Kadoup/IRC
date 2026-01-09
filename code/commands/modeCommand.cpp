@@ -164,6 +164,18 @@ void ModeCommand::execute(int fd, const std::vector<std::string>& parsed) {
 							return;
 						}
 						chan->setLimitEnabled(true);
+						bool isNumber = true;
+						for (size_t i = 0; i < parsed[3].length(); ++i) {
+							if (!std::isdigit(parsed[3][i])) {
+								isNumber = false;
+								break;
+							}
+						}
+						if (!isNumber) {
+							std::string response = ERR_INVALIDMODEPARAM(userId, _server->getClient(fd).getNickname(), parsed[3]);
+							send(fd, response.c_str(), response.length(), 0);
+							return;
+						}
 						int limit = std::atoi(parsed[3].c_str());
 						chan->setUserLimit(limit);
 						std::string response = userId + " MODE " + target + " +l " + parsed[3] + "\r\n";
