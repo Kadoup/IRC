@@ -14,7 +14,7 @@
 #define BUFFER_SIZE 512
 
 IRCClient::IRCClient(const std::string& ip, int port, const std::string& pass)
-    : sockfd(-1), serverIP(ip), serverPort(port), connected(false), password(pass), botNickname("boop") {}
+    : password(pass), sockfd(-1), serverIP(ip), serverPort(port), connected(false), botNickname("boop") {}
 
 IRCClient::~IRCClient() {
     disconnect();
@@ -184,23 +184,22 @@ void IRCClient::parseServerMessage(const std::string& message) {
 }
 
 void IRCClient::sendHelpMessage(const std::string& target) {
-    std::vector<std::string> commands = {
-        "Available IRC commands:",
-        "NICK <nickname> - Change your nickname",
-        "USER <username> <mode> <unused> <realname> - Set user information",
-        "JOIN <channel> - Join a channel",
-        "PART <channel> [message] - Leave a channel",
-        "PRIVMSG <target> <message> - Send a message",
-        "QUIT [message] - Disconnect from server",
-        "TOPIC <channel> [topic] - View or set channel topic",
-        "MODE <target> <modes> - Change channel/user modes",
-        "KICK <channel> <user> [reason] - Kick a user",
-        "INVITE <nickname> <channel> - Invite user to channel",
-        "WHO <mask> - Get information about users",
-        "WHOIS <nickname> - Get detailed user information"
-    };
+    std::vector<std::string> commands;
+    commands.push_back("Available IRC commands:");
+    commands.push_back("NICK <nickname> - Change your nickname");
+    commands.push_back("USER <username> <mode> <unused> <realname> - Set user information");
+    commands.push_back("JOIN <channel> - Join a channel");
+    commands.push_back("PART <channel> [message] - Leave a channel");
+    commands.push_back("PRIVMSG <target> <message> - Send a message");
+    commands.push_back("QUIT [message] - Disconnect from server");
+    commands.push_back("TOPIC <channel> [topic] - View or set channel topic");
+    commands.push_back("MODE <target> <modes> - Change channel/user modes");
+    commands.push_back("KICK <channel> <user> [reason] - Kick a user");
+    commands.push_back("INVITE <nickname> <channel> - Invite user to channel");
+    commands.push_back("WHO <mask> - Get information about users");
+    commands.push_back("WHOIS <nickname> - Get detailed user information");
 
-    for (const auto& cmd : commands) {
-        sendMessage("PRIVMSG " + target + " :" + cmd);
+    for (size_t i = 0; i < commands.size(); ++i) {
+        sendMessage("PRIVMSG " + target + " :" + commands[i]);
     }
 }

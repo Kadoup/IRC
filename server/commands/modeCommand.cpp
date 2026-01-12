@@ -103,7 +103,11 @@ void ModeCommand::execute(int fd, const std::vector<std::string>& parsed) {
 					}
 					else if (parsed[2][1] == 't') {
 						std::string response = userId + " MODE " + target + " +t\r\n";
-						send (fd, response.c_str(), response.length(), 0);
+						std::map<int, clients*> members = chan->getMembers();
+						for (std::map<int, clients*>::iterator memberIt = members.begin(); memberIt != members.end(); ++memberIt) {
+							int memberFd = memberIt->first;
+							send(memberFd, response.c_str(), response.length(), 0);
+						}
 						chan->setReservedTopic(true);
 					}
 					else if (parsed[2][1] == 'k') {
@@ -115,7 +119,11 @@ void ModeCommand::execute(int fd, const std::vector<std::string>& parsed) {
 						chan->setPasswordProtected(true);
 						chan->setPassword(parsed[3]);
 						std::string response = userId + " MODE " + target + " +k " + parsed[3] + "\r\n";
-						send (fd, response.c_str(), response.length(), 0);
+						std::map<int, clients*> members = chan->getMembers();
+						for (std::map<int, clients*>::iterator memberIt = members.begin(); memberIt != members.end(); ++memberIt) {
+							int memberFd = memberIt->first;
+							send(memberFd, response.c_str(), response.length(), 0);
+						}
 					}
 					else if (parsed[2][1] == 'l') {
 						if (parsed.size() < 4) {
@@ -139,7 +147,11 @@ void ModeCommand::execute(int fd, const std::vector<std::string>& parsed) {
 						int limit = std::atoi(parsed[3].c_str());
 						chan->setUserLimit(limit);
 						std::string response = userId + " MODE " + target + " +l " + parsed[3] + "\r\n";
-						send (fd, response.c_str(), response.length(), 0);
+						std::map<int, clients*> members = chan->getMembers();
+						for (std::map<int, clients*>::iterator memberIt = members.begin(); memberIt != members.end(); ++memberIt) {
+							int memberFd = memberIt->first;
+							send(memberFd, response.c_str(), response.length(), 0);
+						}
 					}
 					else {
 						std::string response = ERR_UNKNOWNMODE(userId, _server->getClient(fd).getNickname(), parsed[2]);
@@ -192,19 +204,31 @@ void ModeCommand::execute(int fd, const std::vector<std::string>& parsed) {
 						channel* chan = _server->getChannel(target);
 						chan->setReservedTopic(false);
 						std::string response = userId + " MODE " + target + " -t\r\n";
-						send (fd, response.c_str(), response.length(), 0);
+						std::map<int, clients*> members = chan->getMembers();
+						for (std::map<int, clients*>::iterator memberIt = members.begin(); memberIt != members.end(); ++memberIt) {
+							int memberFd = memberIt->first;
+							send(memberFd, response.c_str(), response.length(), 0);
+						}
 					}
 					else if (parsed[2][1] == 'k') {
 						chan->setPasswordProtected(false);
 						std::string response = userId + " MODE " + target + " -k\r\n";
-						send (fd, response.c_str(), response.length(), 0);
+						std::map<int, clients*> members = chan->getMembers();
+						for (std::map<int, clients*>::iterator memberIt = members.begin(); memberIt != members.end(); ++memberIt) {
+							int memberFd = memberIt->first;
+							send(memberFd, response.c_str(), response.length(), 0);
+						}
 						
 					}
 					else if (parsed[2][1] == 'l') {
 						chan->setLimitEnabled(false);
 						chan->setUserLimit(0);
 						std::string response = userId + " MODE " + target + " -l\r\n";
-						send (fd, response.c_str(), response.length(), 0);
+						std::map<int, clients*> members = chan->getMembers();
+						for (std::map<int, clients*>::iterator memberIt = members.begin(); memberIt != members.end(); ++memberIt) {
+							int memberFd = memberIt->first;
+							send(memberFd, response.c_str(), response.length(), 0);
+						}
 					}
 					else {
 						std::string response = ERR_UNKNOWNMODE(userId, _server->getClient(fd).getNickname(), parsed[2]);

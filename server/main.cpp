@@ -1,5 +1,8 @@
 #include "server.hpp"
 
+bool g_serverRunning = false;
+bool g_ctrlC = false;
+
 void checkPort(char **argv)
 {
     long port = std::strtol(argv[1], NULL, 10);
@@ -8,6 +11,12 @@ void checkPort(char **argv)
         std::cerr << "Port number must be between 1024 and 65535" << std::endl;
         exit(EXIT_FAILURE);
     }
+}
+
+void	_handleSignal(int signal) {
+	g_serverRunning = false;
+    g_ctrlC = true;
+	(void) signal;
 }
 
 int main(int argc, char **argv)
@@ -22,6 +31,9 @@ int main(int argc, char **argv)
     {
         checkPort(argv);
         server srv(std::atoi(argv[1]), argv[2]);
+        g_serverRunning = true;
+        signal(SIGINT, _handleSignal);
+        signal(SIGQUIT, _handleSignal);
         srv.initServer();
         srv.runServer();
     }

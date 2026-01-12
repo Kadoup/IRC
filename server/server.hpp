@@ -11,6 +11,7 @@
 #include <map>
 #include <algorithm>
 #include <sstream>
+#include <signal.h>
 #include "clients.hpp"
 #include "channel.hpp"
 #include "numReplies.hpp"

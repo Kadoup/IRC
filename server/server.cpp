@@ -12,6 +12,10 @@
 #include "commands/inviteCommand.hpp"
 #include "commands/whoCommand.hpp"
 #include "commands/capCommand.hpp"
+#include <cerrno>
+
+extern bool g_serverRunning;
+extern bool g_ctrlC;
 
 pollfd    createPoll(int fd)
 {
@@ -351,10 +355,12 @@ void server::initServer()
 
 void server::runServer()
 {
-	while (1)
+	while (g_serverRunning)
 	{
 		if (poll(_fds.data(), _fds.size(), -1) < 0)
 		{
+			if (g_ctrlC)
+				continue;
 			std::cerr << "Poll error" << std::endl;
 			break;
 		}
@@ -382,6 +388,13 @@ server::server(int port, std::string password)
 
 server::~server()
 {
+	std::string quitMsg = "ERROR :Server shutting down\r\n";
+    for (std::map<int, clients>::iterator it = _clients.begin(); it != _clients.end(); ++it) {
+        send(it->first, quitMsg.c_str(), quitMsg.length(), 0);
+        close(it->first);
+    }
+    _clients.clear();
+
 	for (std::map<std::string, Command*>::iterator it = _commands.begin(); 
 		 it != _commands.end(); ++it) {
 		delete it->second;
