@@ -61,7 +61,6 @@ void KickCommand::execute(int fd, const std::vector<std::string>& parsed) {
 
     std::string reason = parsed.size() > 3 ? parsed[3] : targetNick;
     std::string response = userId + " KICK " + channelName + " " + targetNick + " :" + reason + "\r\n";
-    // send (fd, response.c_str(), response.length(), 0);
 
     std::map<int, clients*> members = chanIt->second.getMembers();
     for (std::map<int, clients*>::iterator it = members.begin(); it != members.end(); ++it) {

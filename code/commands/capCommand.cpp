@@ -8,7 +8,6 @@ CapCommand::CapCommand(server* srv) : Command(srv) {
 }
 
 void CapCommand::execute(int fd, const std::vector<std::string>& parsed) {
-    // clients& client = _server->getClient(fd);
     
     if (parsed.size() >= 2 && parsed[1] == "LS") {
         std::string response = ":" + _server->_getServerName() + " CAP * LS :\r\n";
@@ -27,7 +26,6 @@ void CapCommand::execute(int fd, const std::vector<std::string>& parsed) {
         send(fd, response.c_str(), response.length(), 0);
     }
     else if (parsed.size() >= 2 && parsed[1] == "END") {
-        // Just acknowledge, do nothing special
         return;
     }
 }

@@ -144,9 +144,6 @@ std::string server::_getServerName() const
 	return _serverName;
 }
 
-// void server::registerCommand(const std::string& name, const command& cmd) {
-// 	commandMap[name] = cmd;
-// }
 
 void server::registerCommands() {
 	_commands["NICK"] = new NickCommand(this);
@@ -293,7 +290,6 @@ void server::handleClientMessage(size_t& i)
 		printParsed(command);
 		handleCommands(currentFd, command);
 		if (command[0] == "QUIT") {
-			// Client was removed, decrement i to adjust for removed fd
 			i--;
 			return;
 		}
@@ -302,12 +298,6 @@ void server::handleClientMessage(size_t& i)
 		pos = msg.find("\r\n");
 	}
 	std::cout << _clients[currentFd] << std::endl;
-	// std::stringstream ss;
-	// ss << _fds[i].fd;
-	// std::string clientName = "Client " + ss.str() + ": ";
-	// std::string newBuffer = clientName + std::string(buffer);
-	// std::cout << newBuffer << std::endl;
-	// broadcastMessage(_fds[i].fd, newBuffer);
 }
 
 channel *server::getChannel(const std::string &name)
@@ -320,6 +310,11 @@ channel *server::getChannel(const std::string &name)
 
 void server::initServer()
 {
+	if (_password.empty())
+	{
+		std::cerr << "Password cannot be empty" << std::endl;
+		throw std::runtime_error("Password cannot be empty");
+	}
 	_serverfd = socket(AF_INET, SOCK_STREAM, 0);
 	if (_serverfd == -1)
 	{

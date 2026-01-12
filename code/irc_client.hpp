@@ -1,6 +1,5 @@
 
-#ifndef IRC_CLIENT_HPP
-#define IRC_CLIENT_HPP
+#pragma once
 
 #include <string>
 #include <vector>
@@ -27,5 +26,3 @@ public:
     bool sendMessage(const std::string& message);
     void run();
 };
-
-#endif // IRC_CLIENT_HPP

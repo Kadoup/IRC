@@ -23,12 +23,6 @@ void PrivmsgCommand::execute(int fd, const std::vector<std::string>& parsed) {
         send(fd, response.c_str(), response.length(), 0);
         return;
     }
-    
-    // std::string userId = USER_IDENTIFIER(_server->getClient(fd).getNickname(), _server->getClient(fd).getUsername());
-    // std::string prefix;
-    // prefix = ":" + _server->getClient(fd).getNickname() + "!" + 
-    //          _server->getClient(fd).getUsername() + "@" + 
-    //          _server->getClient(fd).getHostname() + " ";
     std::string target = parsed[1];
     std::vector<int> targetFds = _server->findTarget(target, fd);
     
