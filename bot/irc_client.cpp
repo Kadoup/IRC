@@ -92,7 +92,6 @@ void IRCClient::run() {
             break;
         }
 
-        // Check for user input
         if (fds[0].revents & POLLIN) {
             std::string line;
             if (!std::getline(std::cin, line)) {
@@ -105,7 +104,6 @@ void IRCClient::run() {
             sendMessage(line);
         }
 
-        // Check for server messages
         if (fds[1].revents & POLLIN) {
             memset(buffer, 0, BUFFER_SIZE);
             ssize_t received = recv(sockfd, buffer, BUFFER_SIZE - 1, 0);
@@ -119,7 +117,6 @@ void IRCClient::run() {
             std::cout << serverMsg;
             std::cout.flush();
 
-            // Parse for help commands
             parseServerMessage(serverMsg);
         }
     }
@@ -140,43 +137,37 @@ void IRCClient::parseServerMessage(const std::string& message) {
     std::istringstream iss(message);
     std::string token, sender, target, content;
 
-    // Parse prefix if exists
     if (message[0] == ':') {
-        iss >> token; // :nick!user@host
+        iss >> token;
         size_t nickEnd = token.find('!');
         if (nickEnd != std::string::npos) {
             sender = token.substr(1, nickEnd - 1);
         }
     }
 
-    iss >> token; // PRIVMSG
-    iss >> target; // target (channel or nickname)
+    iss >> token;
+    iss >> target;
 
-    // Get the rest as message content
     if (iss.peek() == ' ') iss.ignore();
-
-    // Check if next part starts with :
     if (iss.peek() == ':') {
-        iss.ignore(); // skip the :
-        std::getline(iss, content); // rest of line
+        iss.ignore();
+        std::getline(iss, content);
     } else {
-        iss >> content; // single word without :
+        iss >> content;
     }
 
-    // Convert to lowercase for case-insensitive comparison
     std::string lowerContent = content;
     std::transform(lowerContent.begin(), lowerContent.end(),
                  lowerContent.begin(), ::tolower);
 
     if (lowerContent.find("help") != std::string::npos) {
-        // Determine where to reply
         std::string replyTarget;
         if (!target.empty() && (target[0] == '#' || target[0] == '&')) {
-            replyTarget = target; // reply to channel
+            replyTarget = target;
         } else if (!sender.empty()) {
-            replyTarget = sender; // reply to sender
+            replyTarget = sender; 
         } else {
-            return; // no valid reply target
+            return;
         }
 
         sendHelpMessage(replyTarget);
